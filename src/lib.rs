@@ -5,5 +5,8 @@ mod render;
 mod template;
 
 pub use template::{SrTemplate, TemplateFunction};
-pub use parser::{parser, TemplateNode};
-pub use render::render_nodes;
+
+pub mod prelude {
+    pub use super::builtin::*;
+    pub use super::{SrTemplate, TemplateFunction};
+}
