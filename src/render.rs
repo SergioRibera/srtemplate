@@ -53,20 +53,39 @@ mod tests {
 
     #[test]
     fn basic_render() {
-        let vars = HashMap::from_iter([("var", "Mundo".to_string())]);
-        let template = "Hola {{ var }}";
+        let vars = HashMap::from_iter([("var", "World".to_string())]);
+        let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &HashMap::new());
 
         assert!(res.is_ok());
 
         let res = res.unwrap();
-        assert_eq!(&res, "Hola Mundo");
+        assert_eq!(&res, "Hello World");
     }
 
     #[test]
     fn basic_function_render() {
-        let vars = HashMap::from_iter([("var", "MuNdO".to_string())]);
+        let vars = HashMap::from_iter([("var", "WoRld".to_string())]);
+        let funcs = HashMap::from_iter([
+            (
+                "toLowerCase",
+                Box::new(builtin::to_lower as TemplateFunction),
+            ),
+        ]);
+        let template = "Hello {{ toLowerCase(var) }}";
+        let (_, nodes) = parser(template).unwrap();
+        let res = render_nodes(nodes, &vars, &funcs);
+
+        assert!(res.is_ok());
+
+        let res = res.unwrap();
+        assert_eq!(res, "Hello world".to_string());
+    }
+
+    #[test]
+    fn recursive_function_render() {
+        let vars = HashMap::from_iter([("var", "    WoRlD ".to_string())]);
         let funcs = HashMap::from_iter([
             (
                 "toLowerCase",
@@ -74,13 +93,34 @@ mod tests {
             ),
             ("trim", Box::new(builtin::trim as TemplateFunction)),
         ]);
-        let template = "Hola {{ toLowerCase(trim(var)) }}";
+        let template = "Hello {{ toLowerCase(trim(var)) }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         assert!(res.is_ok());
 
         let res = res.unwrap();
-        assert_eq!(res, "Hola mundo".to_string());
+        assert_eq!(res, "Hello world".to_string());
+    }
+
+    #[test]
+    fn raw_string_render() {
+        let vars = HashMap::from_iter([("var", "    WoRlD ".to_string())]);
+        let funcs = HashMap::from_iter([
+            (
+                "toLowerCase",
+                Box::new(builtin::to_lower as TemplateFunction),
+            ),
+            ("trim", Box::new(builtin::trim as TemplateFunction)),
+        ]);
+        let template = r#"Hello
+{{ toLowerCase(trim(var)) }}"#;
+        let (_, nodes) = parser(template).unwrap();
+        let res = render_nodes(nodes, &vars, &funcs);
+
+        assert!(res.is_ok());
+
+        let res = res.unwrap();
+        assert_eq!(res, "Hello\nworld".to_string());
     }
 }
