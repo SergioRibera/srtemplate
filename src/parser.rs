@@ -81,8 +81,6 @@ mod test {
         let s = "Hello {{ variable1 }}";
         let res = parser(s);
 
-        println!("{res:?}");
-
         assert!(res.is_ok());
     }
 

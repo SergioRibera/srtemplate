@@ -58,11 +58,9 @@ mod tests {
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &HashMap::new());
 
-        println!("{res:?}");
         assert!(res.is_ok());
 
         let res = res.unwrap();
-        println!("{res:?}");
         assert_eq!(&res, "Hola Mundo");
     }
 
@@ -80,11 +78,9 @@ mod tests {
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
-        println!("{res:?}");
         assert!(res.is_ok());
 
         let res = res.unwrap();
-        println!("{res:?}");
         assert_eq!(res, "Hola mundo".to_string());
     }
 }
