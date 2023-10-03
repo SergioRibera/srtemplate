@@ -1,8 +1,7 @@
 use nom::bytes::complete::take_until;
 use nom::character::complete::none_of;
-use nom::combinator::recognize;
-use nom::multi::{many0, many1};
-use nom::sequence::preceded;
+use nom::combinator::{opt, recognize};
+use nom::multi::{many1, separated_list0};
 use nom::{
     branch::alt, bytes::complete::tag, character::complete::multispace0, sequence::delimited,
     IResult,
@@ -34,10 +33,7 @@ fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, _) = multispace0(input)?;
     let (input, arguments) = delimited(
         tag("("),
-        many0(preceded(
-            multispace0,
-            alt((internal_function_parser, argument_parser)),
-        )),
+        separated_list0(tag(","), alt((internal_function_parser, argument_parser))),
         tag(")"),
     )(input)?;
 
@@ -51,15 +47,16 @@ fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
 }
 
 fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, _) = tag("{{")(input)?;
+    let (input, _) = opt(tag("{{"))(input)?;
     let (input, func) = internal_function_parser(input)?;
-    let (input, _) = tag("}}")(input)?;
+    let (input, _) = opt(tag("}}"))(input)?;
 
     Ok((input, func))
 }
 
 fn argument_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, arg) = recognize(many1(none_of("),{{}}")))(input)?;
+    let arg = arg.trim();
     println!("Input Arg: {input} - ArgName: {arg}");
     Ok((input, TemplateNode::Variable(arg.to_string())))
 }
@@ -143,18 +140,18 @@ mod test {
     #[test]
     fn test_function_parser() {
         let input = "{{ toLowerCase(trim(variable)) }}";
-        let result = function_parser(input);
+        let result = parser(input);
         assert_eq!(
             result,
             Ok((
                 "",
-                TemplateNode::Function(
+                vec![TemplateNode::Function(
                     "toLowerCase".to_string(),
                     vec![TemplateNode::Function(
                         "trim".to_string(),
                         vec![TemplateNode::Variable("variable".to_string())]
                     )]
-                )
+                )]
             ))
         );
     }
@@ -162,12 +159,12 @@ mod test {
     #[test]
     fn test_function_multiple_param() {
         let input = "{{ toLowerCase(trim(variable), variable1, variable2) }}";
-        let result = function_parser(input);
+        let result = parser(input);
         assert_eq!(
             result,
             Ok((
                 "",
-                TemplateNode::Function(
+                vec![TemplateNode::Function(
                     "toLowerCase".to_string(),
                     vec![
                         TemplateNode::Function(
@@ -177,14 +174,14 @@ mod test {
                         TemplateNode::Variable("variable1".to_string()),
                         TemplateNode::Variable("variable2".to_string()),
                     ]
-                )
+                )]
             ))
         );
     }
 
     #[test]
     fn recursive_function_syntax() {
-        let s = "Hello {{ toLowerCase(trim(split(variable1, \",\"))) }}";
+        let s = "Hello {{ toLowerCase(trim(split(variable1, \"|\"))) }}";
         let res = parser(s);
 
         assert_eq!(
@@ -192,7 +189,7 @@ mod test {
             Ok((
                 "",
                 vec![
-                    TemplateNode::Text("Hello".to_string()),
+                    TemplateNode::Text("Hello ".to_string()),
                     TemplateNode::Function(
                         "toLowerCase".to_string(),
                         vec![TemplateNode::Function(
@@ -201,7 +198,7 @@ mod test {
                                 "split".to_string(),
                                 vec![
                                     TemplateNode::Variable("variable1".to_string()),
-                                    TemplateNode::Variable(",".to_string())
+                                    TemplateNode::Variable("\"|\"".to_string())
                                 ]
                             )]
                         )]
