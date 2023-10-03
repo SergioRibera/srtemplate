@@ -1,3 +1,5 @@
+#[cfg(feature = "debug")]
+use log::{debug, trace};
 use nom::bytes::complete::take_until;
 use nom::character::complete::none_of;
 use nom::combinator::{opt, recognize};
@@ -19,7 +21,8 @@ fn variable_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, variable_name) = take_until("}}")(input)?;
     let (input, _) = tag("}}")(input)?;
 
-    println!("Input Variable: {input} - Var Name: {variable_name}");
+    #[cfg(feature = "debug")]
+    debug!("Input Variable: {input} - Var Name: {variable_name}");
 
     Ok((
         input,
@@ -37,7 +40,8 @@ fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
         tag(")"),
     )(input)?;
 
-    println!("FunctionName: {function_name} - Args: {arguments:?} - input: {input}");
+    #[cfg(feature = "debug")]
+    debug!("FunctionName: {function_name} - Args: {arguments:?} - input: {input}");
     let (input, _) = multispace0(input)?;
 
     Ok((
@@ -57,18 +61,21 @@ fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
 fn argument_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, arg) = recognize(many1(none_of("),{{}}")))(input)?;
     let arg = arg.trim();
-    println!("Input Arg: {input} - ArgName: {arg}");
+    #[cfg(feature = "debug")]
+    debug!("Input Arg: {input} - ArgName: {arg}");
     Ok((input, TemplateNode::Variable(arg.to_string())))
 }
 
 fn text_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, text) = take_until("{{")(input)?;
-    println!("Input Text: {input} - Text: {text}");
+    #[cfg(feature = "debug")]
+    debug!("Input Text: {input} - Text: {text}");
     Ok((input, TemplateNode::Text(text.to_string())))
 }
 
 pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
-    println!("Start Parser: {input}");
+    #[cfg(feature = "debug")]
+    trace!("Start Parser: {input}");
     many1(alt((function_parser, variable_parser, text_parser)))(input)
 }
 

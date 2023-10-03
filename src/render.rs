@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use crate::error::SrTemplateError;
 use crate::parser::TemplateNode;
 use crate::template::TemplateFunction;
+#[cfg(feature = "debug")]
+use log::debug;
 
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
@@ -31,10 +33,12 @@ pub fn render_nodes(
                     .ok_or(SrTemplateError::FunctionNotImplemented(function))?;
 
                 let evaluated_arguments = evaluated_arguments?;
-                println!("Evaluated Args: {evaluated_arguments:?}");
+                #[cfg(feature = "debug")]
+                debug!("Evaluated Args: {evaluated_arguments:?}");
 
                 let result_of_function = func(evaluated_arguments);
-                println!("Result of function: {result_of_function:?}");
+                #[cfg(feature = "debug")]
+                debug!("Result of function: {result_of_function:?}");
 
                 res.push_str(&result_of_function);
             }
@@ -67,12 +71,10 @@ mod tests {
     #[test]
     fn basic_function_render() {
         let vars = HashMap::from_iter([("var", "WoRld".to_string())]);
-        let funcs = HashMap::from_iter([
-            (
-                "toLowerCase",
-                Box::new(builtin::to_lower as TemplateFunction),
-            ),
-        ]);
+        let funcs = HashMap::from_iter([(
+            "toLowerCase",
+            Box::new(builtin::to_lower as TemplateFunction),
+        )]);
         let template = "Hello {{ toLowerCase(var) }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
