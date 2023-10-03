@@ -28,7 +28,7 @@ pub fn render_nodes(
                     .collect();
                 let func = funcs
                     .get(function.as_str())
-                    .ok_or(SrTemplateError::FunctionNotSupported(function))?;
+                    .ok_or(SrTemplateError::FunctionNotImplemented(function))?;
 
                 let evaluated_arguments = evaluated_arguments?;
                 println!("Evaluated Args: {evaluated_arguments:?}");
