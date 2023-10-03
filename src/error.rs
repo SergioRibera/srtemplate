@@ -10,7 +10,4 @@ pub enum SrTemplateError {
 
     #[error("Function not imlemented: {0}")]
     FunctionNotImplemented(String),
-
-    #[error("Function not supported: {0}")]
-    FunctionNotSupported(String),
 }
