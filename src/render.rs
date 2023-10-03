@@ -43,3 +43,48 @@ pub fn render_nodes(
 
     Ok(res)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::builtin;
+    use crate::parser::parser;
+
+    use super::*;
+
+    #[test]
+    fn basic_render() {
+        let vars = HashMap::from_iter([("var", "Mundo".to_string())]);
+        let template = "Hola {{ var }}";
+        let (_, nodes) = parser(template).unwrap();
+        let res = render_nodes(nodes, &vars, &HashMap::new());
+
+        println!("{res:?}");
+        assert!(res.is_ok());
+
+        let res = res.unwrap();
+        println!("{res:?}");
+        assert_eq!(&res, "Hola Mundo");
+    }
+
+    #[test]
+    fn basic_function_render() {
+        let vars = HashMap::from_iter([("var", "MuNdO".to_string())]);
+        let funcs = HashMap::from_iter([
+            (
+                "toLowerCase",
+                Box::new(builtin::to_lower as TemplateFunction),
+            ),
+            ("trim", Box::new(builtin::trim as TemplateFunction)),
+        ]);
+        let template = "Hola {{ toLowerCase(trim(var)) }}";
+        let (_, nodes) = parser(template).unwrap();
+        let res = render_nodes(nodes, &vars, &funcs);
+
+        println!("{res:?}");
+        assert!(res.is_ok());
+
+        let res = res.unwrap();
+        println!("{res:?}");
+        assert_eq!(res, "Hola mundo".to_string());
+    }
+}

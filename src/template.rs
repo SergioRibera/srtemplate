@@ -24,8 +24,9 @@ impl<'a> SrTemplate<'a> {
     }
 
     pub fn render(&self, text: &str) -> Result<String, SrTemplateError> {
-        let (_, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
-        render_nodes(nodes, &self.variables, &self.functions)
+        let (left, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
+        let res = render_nodes(nodes, &self.variables, &self.functions)?;
+        Ok(format!("{left}{res}"))
     }
 }
 
@@ -47,36 +48,5 @@ impl<'a> Default for SrTemplate<'a> {
         }
 
         tmp
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn basic_render() {
-        let mut ctx = SrTemplate::default();
-        ctx.add_variable("var", "Mundo".to_string());
-        let template = "Hola {{ var }}";
-        let res = ctx.render(template);
-
-        assert!(res.is_ok());
-
-        let res = res.unwrap();
-        assert_eq!(res, "Hola Mundo".to_string());
-    }
-
-    #[test]
-    fn basic_function_render() {
-        let mut ctx = SrTemplate::default();
-        ctx.add_variable("var", "MuNdO".to_string());
-        let template = "Hola {{ toLowerCase(var)}}";
-        let res = ctx.render(template);
-
-        assert!(res.is_ok());
-
-        let res = res.unwrap();
-        assert_eq!(res, "Hola mundo".to_string());
     }
 }
