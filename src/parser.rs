@@ -50,13 +50,13 @@ fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
     ))
 }
 
-// fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
-//     let (input, _) = tag("{{")(input)?;
-//     let (input, func) = internal_function_parser(input)?;
-//     let (input, _) = tag("}}")(input)?;
-//
-//     Ok((input, func))
-// }
+fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
+    let (input, _) = tag("{{")(input)?;
+    let (input, func) = internal_function_parser(input)?;
+    let (input, _) = tag("}}")(input)?;
+
+    Ok((input, func))
+}
 
 fn argument_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, arg) = recognize(many1(none_of("),{{}}")))(input)?;
@@ -72,7 +72,7 @@ fn text_parser(input: &str) -> IResult<&str, TemplateNode> {
 
 pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
     println!("Start Parser: {input}");
-    many0(alt((text_parser, variable_parser, function_parser)))(input)
+    many1(alt((function_parser, variable_parser, text_parser)))(input)
 }
 
 #[cfg(test)]
