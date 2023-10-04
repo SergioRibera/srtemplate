@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use dashmap::DashMap;
 
 use crate::error::SrTemplateError;
 use crate::parser::TemplateNode;
@@ -8,8 +8,8 @@ use log::debug;
 
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
-    vars: &HashMap<&str, String>,
-    funcs: &HashMap<&str, Box<TemplateFunction>>,
+    vars: &DashMap<&str, String>,
+    funcs: &DashMap<&str, Box<TemplateFunction>>,
 ) -> Result<String, SrTemplateError> {
     let mut res = String::new();
 
@@ -53,14 +53,16 @@ mod tests {
     use crate::builtin;
     use crate::parser::parser;
 
+    use dashmap::DashMap;
+
     use super::*;
 
     #[test]
     fn basic_render() {
-        let vars = HashMap::from_iter([("var", "World".to_string())]);
+        let vars = DashMap::from_iter([("var", "World".to_string())]);
         let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
-        let res = render_nodes(nodes, &vars, &HashMap::new());
+        let res = render_nodes(nodes, &vars, &DashMap::new());
 
         assert!(res.is_ok());
 
@@ -70,8 +72,8 @@ mod tests {
 
     #[test]
     fn basic_function_render() {
-        let vars = HashMap::from_iter([("var", "WoRld".to_string())]);
-        let funcs = HashMap::from_iter([(
+        let vars = DashMap::from_iter([("var", "WoRld".to_string())]);
+        let funcs = DashMap::from_iter([(
             "toLowerCase",
             Box::new(builtin::to_lower as TemplateFunction),
         )]);
@@ -87,8 +89,8 @@ mod tests {
 
     #[test]
     fn recursive_function_render() {
-        let vars = HashMap::from_iter([("var", "    WoRlD ".to_string())]);
-        let funcs = HashMap::from_iter([
+        let vars = DashMap::from_iter([("var", "    WoRlD ".to_string())]);
+        let funcs = DashMap::from_iter([
             (
                 "toLowerCase",
                 Box::new(builtin::to_lower as TemplateFunction),
@@ -107,8 +109,8 @@ mod tests {
 
     #[test]
     fn raw_string_render() {
-        let vars = HashMap::from_iter([("var", "    WoRlD ".to_string())]);
-        let funcs = HashMap::from_iter([
+        let vars = DashMap::from_iter([("var", "    WoRlD ".to_string())]);
+        let funcs = DashMap::from_iter([
             (
                 "toLowerCase",
                 Box::new(builtin::to_lower as TemplateFunction),
