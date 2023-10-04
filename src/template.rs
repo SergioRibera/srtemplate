@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use crate::builtin;
 use crate::error::SrTemplateError;
@@ -7,25 +8,28 @@ use crate::render::render_nodes;
 
 pub type TemplateFunction = fn(Vec<String>) -> String;
 
+#[derive(Clone)]
 pub struct SrTemplate<'a> {
-    variables: HashMap<&'a str, String>,
-    functions: HashMap<&'a str, Box<TemplateFunction>>,
+    variables: Arc<RwLock<HashMap<&'a str, String>>>,
+    functions: Arc<RwLock<HashMap<&'a str, Box<TemplateFunction>>>>,
 }
 
 impl<'a> SrTemplate<'a> {
     pub fn add_variable(&mut self, name: &'a str, value: String) {
-        self.variables.entry(name.as_ref()).or_insert(value);
+        self.variables.write().unwrap().insert(name, value);
     }
 
     pub fn add_function(&mut self, name: &'a str, func: TemplateFunction) {
-        self.functions
-            .entry(name.as_ref())
-            .or_insert(Box::new(func));
+        self.functions.write().unwrap().insert(name, Box::new(func));
     }
 
     pub fn render(&self, text: &str) -> Result<String, SrTemplateError> {
         let (left, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
-        let res = render_nodes(nodes, &self.variables, &self.functions)?;
+        let res = render_nodes(
+            nodes,
+            &*self.variables.read().unwrap(),
+            &*self.functions.read().unwrap(),
+        )?;
         Ok(format!("{left}{res}"))
     }
 }
