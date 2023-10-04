@@ -10,4 +10,7 @@ pub enum SrTemplateError {
 
     #[error("Function not imlemented: {0}")]
     FunctionNotImplemented(String),
+
+    #[error("Error Processing Function: {0}")]
+    Function(#[from] super::template::function::FunctionError),
 }

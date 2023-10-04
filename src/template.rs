@@ -1,10 +1,12 @@
-use std::sync::Arc;
 use dashmap::DashMap;
+use std::sync::Arc;
 
 use crate::builtin;
 use crate::error::SrTemplateError;
 use crate::parser::parser;
 use crate::render::render_nodes;
+
+pub mod function;
 
 pub type TemplateFunction = fn(Vec<String>) -> String;
 
@@ -25,11 +27,7 @@ impl<'a> SrTemplate<'a> {
 
     pub fn render(&self, text: &str) -> Result<String, SrTemplateError> {
         let (left, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
-        let res = render_nodes(
-            nodes,
-            &self.variables.clone(),
-            &self.functions.clone(),
-        )?;
+        let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
         Ok(format!("{left}{res}"))
     }
 }
