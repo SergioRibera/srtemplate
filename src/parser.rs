@@ -162,6 +162,19 @@ mod test {
     }
 
     #[test]
+    fn test_function_without_args() {
+        let input = "{{ toLowerCase() }}";
+        let result = parser(input);
+        assert_eq!(
+            result,
+            Ok((
+                "",
+                vec![TemplateNode::Function("toLowerCase".to_string(), vec![])]
+            ))
+        );
+    }
+
+    #[test]
     fn test_function_multiple_param() {
         let input = "{{ toLowerCase(trim(variable), variable1, variable2) }}";
         let result = parser(input);
