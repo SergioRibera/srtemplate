@@ -12,13 +12,13 @@ pub type TemplateFunction = fn(Vec<String>) -> String;
 
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
-    variables: Arc<DashMap<&'a str, String>>,
+    variables: Arc<DashMap<&'a str, Box<&'a dyn ToString>>>,
     functions: Arc<DashMap<&'a str, Box<TemplateFunction>>>,
 }
 
 impl<'a> SrTemplate<'a> {
-    pub fn add_variable(&mut self, name: &'a str, value: String) {
-        self.variables.insert(name, value);
+    pub fn add_variable(&mut self, name: &'a str, value: &'a dyn ToString) {
+        self.variables.insert(name, Box::new(value));
     }
 
     pub fn add_function(&mut self, name: &'a str, func: TemplateFunction) {
