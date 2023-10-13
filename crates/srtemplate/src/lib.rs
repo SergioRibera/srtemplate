@@ -11,5 +11,6 @@ pub mod prelude {
     pub use super::builtin::*;
     pub use super::error::SrTemplateError;
     pub use super::template::function::*;
+    pub use super::template::validations;
     pub use super::{SrTemplate, TemplateFunction};
 }

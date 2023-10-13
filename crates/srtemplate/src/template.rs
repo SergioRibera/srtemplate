@@ -6,9 +6,12 @@ use crate::error::SrTemplateError;
 use crate::parser::parser;
 use crate::render::render_nodes;
 
-pub mod function;
+use self::function::FuncResult;
 
-pub type TemplateFunction = fn(Vec<String>) -> String;
+pub mod function;
+pub mod validations;
+
+pub type TemplateFunction = fn(Vec<String>) -> FuncResult;
 
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
@@ -48,6 +51,9 @@ impl<'a> Default for SrTemplate<'a> {
             tmp.add_function("toUpper", builtin::to_upper);
             tmp.add_function("trim", builtin::trim);
         }
+
+        #[cfg(feature = "number")]
+        {}
 
         tmp
     }
