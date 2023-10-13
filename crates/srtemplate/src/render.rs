@@ -36,7 +36,7 @@ pub fn render_nodes(
                 #[cfg(feature = "debug")]
                 debug!("Evaluated Args: {evaluated_arguments:?}");
 
-                let result_of_function = func(evaluated_arguments);
+                let result_of_function = func(evaluated_arguments)?;
                 #[cfg(feature = "debug")]
                 debug!("Result of function: {result_of_function:?}");
 
