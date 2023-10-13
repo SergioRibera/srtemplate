@@ -14,7 +14,7 @@ fn to_title(args: Vec<String>) -> String {
 
 fn main() {
     let mut ctx = SrTemplate::default();
-    ctx.add_variable("var", "mUnDo".to_string());
+    ctx.add_variable("var", &"mUnDo");
     ctx.add_function("toTitle", to_title);
     
     let template = "Hola {{ toTitle(var) }}";
