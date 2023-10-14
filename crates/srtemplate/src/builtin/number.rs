@@ -3,15 +3,21 @@
 use concat_idents::concat_idents;
 use std::ops::{Add, Sub, Mul, Div};
 
+use crate::function::FuncResult;
+use crate::prelude::validations;
+
 macro_rules! gen_math_fn {
     ($name: ident, $( $t: ty ),* ) => {
         $(
             concat_idents!(fn_name = $name, _, $t {
-                pub fn fn_name(args: Vec<String>) -> String {
-                    args.iter()
+                pub fn fn_name(args: Vec<String>) -> FuncResult {
+                    for arg in &args {
+                        validations::arg_type::<$t>(arg.clone())?;
+                    }
+                    Ok(args.iter()
                         .map(|a| a.parse::<$t>().unwrap_or_default())
                         .fold($t::default(), |acc, x| acc.$name(x))
-                        .to_string()
+                        .to_string())
                 }
             });
         )*
