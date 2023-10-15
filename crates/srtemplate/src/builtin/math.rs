@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 use paste::paste;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 use crate::function::FuncResult;
 use crate::prelude::validations;

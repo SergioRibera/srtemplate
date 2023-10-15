@@ -1,14 +1,14 @@
-#[cfg(feature = "os")]
-mod os;
 #[cfg(feature = "math")]
 mod math;
+#[cfg(feature = "os")]
+mod os;
 #[cfg(feature = "text")]
 mod text;
 
-#[cfg(feature = "os")]
-pub use os::*;
 #[cfg(feature = "math")]
 pub use math::*;
+#[cfg(feature = "os")]
+pub use os::*;
 #[cfg(feature = "text")]
 pub use text::*;
 

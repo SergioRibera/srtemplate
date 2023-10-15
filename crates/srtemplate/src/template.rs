@@ -1,6 +1,6 @@
+use dashmap::DashMap;
 #[cfg(feature = "math")]
 use paste::paste;
-use dashmap::DashMap;
 use std::borrow::Cow;
 use std::sync::Arc;
 
