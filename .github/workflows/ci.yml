@@ -7,7 +7,7 @@ on:
       - main
     paths-ignore:
       - ".github/"
-      - "***/Makefile.toml"
+      - "**/Makefile.toml"
       - "release.toml"
       - "LICENSE*"
       - "README.md"
