@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use dashmap::DashMap;
 
 use crate::error::SrTemplateError;
@@ -8,7 +10,7 @@ use log::debug;
 
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
-    vars: &DashMap<&str, Box<&dyn ToString>>,
+    vars: &DashMap<&str, Box<Cow<'_, str>>>,
     funcs: &DashMap<&str, Box<TemplateFunction>>,
 ) -> Result<String, SrTemplateError> {
     let mut res = String::new();
@@ -21,7 +23,7 @@ pub fn render_nodes(
                     .get(variable.as_str())
                     .ok_or(SrTemplateError::VariableNotFound(variable))?;
 
-                res.push_str(&variable.to_string());
+                res.push_str(&variable);
             }
             TemplateNode::Function(function, arguments) => {
                 let evaluated_arguments: Result<Vec<String>, SrTemplateError> = arguments
@@ -59,8 +61,7 @@ mod tests {
 
     #[test]
     fn basic_render() {
-        let vars: DashMap<&str, Box<&dyn ToString>> =
-            DashMap::from_iter([("var", Box::new(&"World" as &dyn ToString))]);
+        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("World")))]);
         let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
@@ -73,8 +74,7 @@ mod tests {
 
     #[test]
     fn basic_function_render() {
-        let vars: DashMap<&str, Box<&dyn ToString>> =
-            DashMap::from_iter([("var", Box::new(&"WoRlD" as &dyn ToString))]);
+        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("WoRlD")))]);
         let funcs = DashMap::from_iter([(
             "toLowerCase",
             Box::new(builtin::to_lower as TemplateFunction),
@@ -91,8 +91,7 @@ mod tests {
 
     #[test]
     fn recursive_function_render() {
-        let vars: DashMap<&str, Box<&dyn ToString>> =
-            DashMap::from_iter([("var", Box::new(&"WoRlD" as &dyn ToString))]);
+        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("WoRlD")))]);
         let funcs = DashMap::from_iter([
             (
                 "toLowerCase",
@@ -112,8 +111,7 @@ mod tests {
 
     #[test]
     fn raw_string_render() {
-        let vars: DashMap<&str, Box<&dyn ToString>> =
-            DashMap::from_iter([("var", Box::new(&"    WoRlD" as &dyn ToString))]);
+        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("    WoRlD")))]);
         let funcs = DashMap::from_iter([
             (
                 "toLowerCase",

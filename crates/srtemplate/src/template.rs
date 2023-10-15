@@ -1,5 +1,6 @@
 use concat_idents::concat_idents;
 use dashmap::DashMap;
+use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::builtin;
@@ -18,13 +19,14 @@ pub type TemplateFunction = fn(Vec<String>) -> FuncResult;
 
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
-    variables: Arc<DashMap<&'a str, Box<&'a dyn ToString>>>,
+    variables: Arc<DashMap<&'a str, Box<Cow<'a, str>>>>,
     functions: Arc<DashMap<&'a str, Box<TemplateFunction>>>,
 }
 
 impl<'a> SrTemplate<'a> {
-    pub fn add_variable(&mut self, name: &'a str, value: &'a dyn ToString) {
-        self.variables.insert(name, Box::new(value));
+    pub fn add_variable<T: ToString>(&mut self, name: &'a str, value: T) {
+        self.variables
+            .insert(name, Box::new(value.to_string().into()));
     }
 
     pub fn add_function(&mut self, name: &'a str, func: TemplateFunction) {
