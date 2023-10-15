@@ -5,6 +5,14 @@
 
 </div>
 
+<div align="center">
+
+<img alt="GitHub Workflow Status (with event)" src="https://img.shields.io/github/actions/workflow/status/SergioRibera/srtemplate/ci.yml">
+<img alt="Crates.io" src="https://img.shields.io/crates/v/srtemplate">
+<img alt="docs.rs" src="https://img.shields.io/docsrs/srtemplate">
+
+</div>
+
 # SrTemplate
 Mr. strings template is a library that allows you to render just text templates.
 
