@@ -1,8 +1,8 @@
 use srtemplate::prelude::{validations, FuncResult};
 use srtemplate::SrTemplate;
 
-fn to_title(args: Vec<String>) -> FuncResult {
-    validations::args_min_len(&args, 1)?; // We validate that we receive a minimum of 1 argument.
+fn to_title(args: &[String]) -> FuncResult {
+    validations::args_min_len(args, 1)?; // We validate that we receive a minimum of 1 argument.
 
     println!("Args: {args:?}");
     Ok(args

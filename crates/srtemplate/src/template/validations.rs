@@ -4,14 +4,16 @@ use crate::prelude::FunctionError;
 
 pub type ValidationResult = Result<(), FunctionError>;
 
-pub fn args_min_len(args: &[String], expected: usize) -> ValidationResult {
+#[must_use]
+pub const fn args_min_len(args: &[String], expected: usize) -> ValidationResult {
     if expected > args.len() {
         return Err(FunctionError::ArgumentsIncomplete(args.len(), expected));
     }
     Ok(())
 }
 
-pub fn args_max_len(args: &[String], expected: usize) -> ValidationResult {
+#[must_use]
+pub const fn args_max_len(args: &[String], expected: usize) -> ValidationResult {
     if args.len() > expected {
         return Err(FunctionError::ArgumentsIncomplete(args.len(), expected));
     }

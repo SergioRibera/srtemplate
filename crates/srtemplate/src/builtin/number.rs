@@ -10,8 +10,8 @@ macro_rules! gen_math_fn {
     ($name: ident, $( $t: ty ),* ) => {
         $(
             concat_idents!(fn_name = $name, _, $t {
-                pub fn fn_name(args: Vec<String>) -> FuncResult {
-                    for arg in &args {
+                pub fn fn_name(args: &[String]) -> FuncResult {
+                    for arg in args {
                         validations::arg_type::<$t>(arg.clone())?;
                     }
                     Ok(args.iter()

@@ -15,7 +15,7 @@ use self::function::FuncResult;
 pub mod function;
 pub mod validations;
 
-pub type TemplateFunction = fn(Vec<String>) -> FuncResult;
+pub type TemplateFunction = fn(&[String]) -> FuncResult;
 
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
@@ -43,8 +43,8 @@ impl<'a> SrTemplate<'a> {
 impl<'a> Default for SrTemplate<'a> {
     fn default() -> Self {
         let mut tmp = Self {
-            variables: Default::default(),
-            functions: Default::default(),
+            variables: Arc::default(),
+            functions: Arc::default(),
         };
 
         #[cfg(feature = "os")]
