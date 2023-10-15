@@ -1,3 +1,4 @@
+#[cfg(feature = "math")]
 use paste::paste;
 use dashmap::DashMap;
 use std::borrow::Cow;
@@ -8,7 +9,7 @@ use crate::error::SrTemplateError;
 use crate::parser::parser;
 use crate::render::render_nodes;
 
-#[cfg(feature = "number")]
+#[cfg(feature = "math")]
 use crate::gen_math_use;
 
 use self::function::FuncResult;
@@ -58,7 +59,7 @@ impl<'a> Default for SrTemplate<'a> {
             tmp.add_function("trim", builtin::trim);
         }
 
-        #[cfg(feature = "number")]
+        #[cfg(feature = "math")]
         {
             gen_math_use!(tmp);
         }
