@@ -19,7 +19,7 @@ pub fn args_max_len(args: &[String], expected: usize) -> ValidationResult {
 }
 
 pub fn arg_type<T: FromStr>(arg: String) -> ValidationResult {
-    if let Err(_) = arg.parse::<T>() {
+    if arg.parse::<T>().is_err() {
         return Err(FunctionError::InvalidType(arg));
     }
     Ok(())
