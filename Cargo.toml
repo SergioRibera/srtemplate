@@ -1,3 +1,41 @@
-[workspace]
-resolver = "2"
-members = ["crates/srtemplate"]
+[package]
+name = "srtemplate"
+version = "0.1.0"
+edition = "2021"
+description = "Template String made with nom parser"
+authors = ["Sergio Ribera"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/SergioRibera/srtemplate"
+homepage = "https://github.com/SergioRibera/srtemplate"
+
+[profile.dev]
+opt-level = 1
+incremental = true
+
+[profile.release]
+strip = true
+lto = "thin"
+panic = 'abort'
+opt-level = 3
+codegen-units = 1
+
+[features]
+default = ["text", "os", "math", "typed_args"]
+debug = ["log"]
+text = []
+os = []
+math = ["dep:paste"]
+typed_args = []
+
+[dependencies]
+nom = "7.1.3"
+anyhow = "1.0.75"
+dashmap = "5.5.3"
+thiserror = "1.0.49"
+paste = { version = "1.0.14", optional = true }
+log = { version = "0.4.20", optional = true }
+
+[[example]]
+name = "parse_args"
+required-features = ["typed_args"]
+path = "./examples/parse_args.rs"
