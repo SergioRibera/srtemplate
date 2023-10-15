@@ -12,6 +12,10 @@ homepage = "https://github.com/SergioRibera/srtemplate"
 readme = "README.md"
 include = ["**/**/*.rs", "Cargo.toml", "rust-toolchain.toml", "rustfmt.toml"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [profile.dev]
 opt-level = 1
 incremental = true

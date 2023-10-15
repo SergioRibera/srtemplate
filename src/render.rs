@@ -8,6 +8,19 @@ use crate::template::TemplateFunction;
 #[cfg(feature = "debug")]
 use log::debug;
 
+/// Renders a vector of `TemplateNode`s, replacing variables and processing functions.
+///
+/// This function processes a list of `TemplateNode`s and returns a `Result` containing the rendered template as a `String` or a [`SrTemplateError`] in case of an error.
+///
+/// # Arguments
+///
+/// * `nodes`: A vector of `TemplateNode`s to be processed.
+/// * `vars`: A reference to a `DashMap` containing variable names as keys and `Cow<'_, str>` as values.
+/// * `funcs`: A reference to a `DashMap` containing function names as keys and `TemplateFunction` closures as values.
+///
+/// # Returns
+///
+/// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
     vars: &DashMap<&str, Box<Cow<'_, str>>>,

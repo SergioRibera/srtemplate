@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// An enumeration representing different errors that can occur while parsing arguments.
 #[derive(Debug, Error)]
 pub enum FromArgsError {
     #[error("Invalid Type: {0}")]
@@ -14,7 +15,9 @@ pub enum FromArgsError {
 
 pub type FromArgsResult<T> = Result<T, FromArgsError>;
 
+/// A trait for parsing function arguments into a specified type.
 pub trait FromArgs {
+    /// Parse function arguments into the specified type.
     fn from_args(args: &[String]) -> FromArgsResult<Self>
     where
         Self: Sized;

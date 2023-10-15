@@ -4,6 +4,18 @@ use crate::prelude::FunctionError;
 
 pub type ValidationResult = Result<(), FunctionError>;
 
+/// Checks if the number of arguments is at least `expected`.
+/// If there are fewer arguments, it returns an error.
+///
+/// # Arguments
+///
+/// * `args` - A slice of strings representing the arguments.
+/// * `expected` - The minimum number of arguments expected.
+///
+/// # Returns
+///
+/// An `Result<(), FunctionError>` where `Ok(())` indicates that the number of arguments
+/// meets the minimum requirement, and `Err` contains an error if the requirement is not met.
 pub const fn args_min_len(args: &[String], expected: usize) -> ValidationResult {
     if expected > args.len() {
         return Err(FunctionError::ArgumentsIncomplete(args.len(), expected));
@@ -11,6 +23,18 @@ pub const fn args_min_len(args: &[String], expected: usize) -> ValidationResult 
     Ok(())
 }
 
+/// Checks if the number of arguments is at most `expected`.
+/// If there are more arguments, it returns an error.
+///
+/// # Arguments
+///
+/// * `args` - A slice of strings representing the arguments.
+/// * `expected` - The maximum number of arguments expected.
+///
+/// # Returns
+///
+/// An `Result<(), FunctionError>` where `Ok(())` indicates that the number of arguments
+/// meets the maximum requirement, and `Err` contains an error if the requirement is exceeded.
 pub const fn args_max_len(args: &[String], expected: usize) -> ValidationResult {
     if args.len() > expected {
         return Err(FunctionError::ArgumentsIncomplete(args.len(), expected));
@@ -18,6 +42,32 @@ pub const fn args_max_len(args: &[String], expected: usize) -> ValidationResult 
     Ok(())
 }
 
+/// Checks if a string argument can be parsed into a specific type `T`.
+/// If parsing fails, it returns an error.
+///
+/// # Arguments
+///
+/// * `arg` - A string representing the argument to be parsed.
+///
+/// # Returns
+///
+/// An `Result<(), FunctionError>` where `Ok(())` indicates that the argument
+/// can be successfully parsed into type `T`, and `Err` contains an error if parsing fails.
+///
+/// # Example
+///
+/// ```no_run
+/// use std::str::FromStr;
+/// use srtemplate::prelude::arg_type;
+///
+/// let valid_arg = "42";
+/// let result = arg_type::<i32>(valid_arg.to_string());
+/// assert!(result.is_ok());
+///
+/// let invalid_arg = "not_an_integer";
+/// let result = arg_type::<i32>(invalid_arg.to_string());
+/// assert!(result.is_err());
+/// ```
 pub fn arg_type<T: FromStr>(arg: String) -> ValidationResult {
     if arg.parse::<T>().is_err() {
         return Err(FunctionError::InvalidType(arg));

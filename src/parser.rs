@@ -12,13 +12,28 @@ mod test;
 use function::function_parser;
 use values::{text_parser, variable_parser};
 
+/// Variants of the types of nodes that exist in the syntax
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateNode {
+    /// Variables to be rendered
     Variable(String),
+    /// Functions to be rendered
     Function(String, Vec<TemplateNode>),
+    /// Plain text, this will be ignored in the rendering
     Text(String),
 }
 
+/// Parse a string input into a vector of `TemplateNode`s.
+///
+/// This function takes a string input and parses it into a vector of `TemplateNode`s, representing different elements of the template. It uses the `nom` parser combinator library to handle the parsing.
+///
+/// # Arguments
+///
+/// * `input`: The input string to be parsed as a template.
+///
+/// # Returns
+///
+/// An `IResult` containing the remaining unparsed input (if any) and a vector of `TemplateNode`s, representing the parsed elements of the template.
 pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
     #[cfg(feature = "debug")]
     trace!("Start Parser: {input}");
