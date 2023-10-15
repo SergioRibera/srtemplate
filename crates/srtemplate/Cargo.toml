@@ -6,11 +6,11 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["text", "os", "number", "typed_args"]
+default = ["text", "os", "math", "typed_args"]
 debug = ["log"]
 text = []
 os = []
-number = ["dep:paste"]
+math = ["dep:paste"]
 typed_args = []
 
 [dependencies]
