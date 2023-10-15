@@ -1,3 +1,5 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 pub mod builtin;
 mod error;
 #[cfg(feature = "typed_args")]
