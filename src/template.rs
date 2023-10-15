@@ -75,13 +75,11 @@ impl<'a> SrTemplate<'a> {
     /// use srtemplate::prelude::SrTemplate;
     /// use srtemplate::prelude::SrTemplateError;
     ///
-    /// fn main() {
-    ///     let ctx = SrTemplate::default();
-    ///     let template = "Hello, {{ name }}!";
-    ///     match ctx.render(template) {
-    ///         Ok(rendered) => println!("Rendered: {}", rendered),
-    ///         Err(err) => eprintln!("Error: {:?}", err),
-    ///     }
+    /// let ctx = SrTemplate::default();
+    /// let template = "Hello, {{ name }}!";
+    /// match ctx.render(template) {
+    ///     Ok(rendered) => println!("Rendered: {}", rendered),
+    ///     Err(err) => eprintln!("Error: {:?}", err),
     /// }
     /// ```
     pub fn render(&self, text: &str) -> Result<String, SrTemplateError> {
@@ -100,13 +98,13 @@ impl<'a> Default for SrTemplate<'a> {
         };
 
         #[cfg(feature = "os")]
-        tmp.add_function("env", builtin::env);
+        tmp.add_function("env", builtin::os::env);
 
         #[cfg(feature = "text")]
         {
-            tmp.add_function("toLower", builtin::to_lower);
-            tmp.add_function("toUpper", builtin::to_upper);
-            tmp.add_function("trim", builtin::trim);
+            tmp.add_function("toLower", builtin::text::to_lower);
+            tmp.add_function("toUpper", builtin::text::to_upper);
+            tmp.add_function("trim", builtin::text::trim);
         }
 
         #[cfg(feature = "math")]
