@@ -18,6 +18,7 @@ use crate::helper::serialize::FromArgs;
 use crate::prelude::FunctionError;
 
 #[cfg(feature = "typed_args")]
+#[must_use]
 pub fn to_typed_args<T: FromArgs>(args: &[String]) -> Result<T, FunctionError> {
     Ok(T::from_args(args)?)
 }

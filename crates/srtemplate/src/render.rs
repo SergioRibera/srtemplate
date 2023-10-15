@@ -30,15 +30,17 @@ pub fn render_nodes(
                     .into_iter()
                     .map(|arg| render_nodes(vec![arg], vars, funcs))
                     .collect();
-                let func = funcs
-                    .get(function.as_str())
-                    .ok_or(SrTemplateError::FunctionNotImplemented(function))?;
 
                 let evaluated_arguments = evaluated_arguments?;
                 #[cfg(feature = "debug")]
                 debug!("Evaluated Args: {evaluated_arguments:?}");
 
-                let result_of_function = func(evaluated_arguments)?;
+                let result_of_function = funcs
+                    .get(function.as_str())
+                    .ok_or(SrTemplateError::FunctionNotImplemented(function))?(
+                    &evaluated_arguments,
+                )?;
+
                 #[cfg(feature = "debug")]
                 debug!("Result of function: {result_of_function:?}");
 
