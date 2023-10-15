@@ -1,3 +1,10 @@
+
+<div align="center">
+
+![srtemplate](https://github.com/SergioRibera/srtemplate/assets/56278796/d8e695ba-4f1b-47dd-9f70-334a4d051229)
+
+</div>
+
 # SrTemplate
 Mr. strings template is a library that allows you to render just text templates.
 
@@ -12,7 +19,8 @@ Mr. strings template is a library that allows you to render just text templates.
 - Using the same variables renders multiple times
 
 ## Basic example
-> [!INFO] **NOTE:** See more examples [here](./crates/srtemplate/examples)
+> [!NOTE]
+> See more examples [here](./crates/srtemplate/examples)
 
 ```rs
 use srtemplate::SrTemplate;
@@ -28,7 +36,8 @@ fn main() {
 }
 ```
 
-> [!INFO] For more information about the functions implemented by default or how to use the library in depth, see the [wiki](https://github.com/SergioRibera/srtemplate/wiki)
+> [!NOTE]
+>  For more information about the functions implemented by default or how to use the library in depth, see the [wiki](https://github.com/SergioRibera/srtemplate/wiki)
 
 ## TODO's
 - [ ] I would like to change the way custom functions are implemented.
