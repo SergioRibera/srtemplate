@@ -19,6 +19,7 @@ use crate::template::validations;
 /// This function can return an error of [`crate::function::FunctionError`] variant:
 /// - `FunctionError::InvalidArgument` if there are insufficient input arguments.
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
+#[cfg(feature = "text")]
 pub fn to_lower(args: &[String]) -> FuncResult {
     validations::args_min_len(args, 1)?;
 
@@ -47,6 +48,7 @@ pub fn to_lower(args: &[String]) -> FuncResult {
 /// This function can return an error of [`crate::function::FunctionError`] variant:
 /// - `FunctionError::InvalidArgument` if there are insufficient input arguments.
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
+#[cfg(feature = "text")]
 pub fn to_upper(args: &[String]) -> FuncResult {
     validations::args_min_len(args, 1)?;
 
@@ -75,6 +77,7 @@ pub fn to_upper(args: &[String]) -> FuncResult {
 /// This function can return an error of [`crate::function::FunctionError`] variant:
 /// - `FunctionError::InvalidArgument` if there are insufficient input arguments.
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
+#[cfg(feature = "text")]
 pub fn trim(args: &[String]) -> FuncResult {
     validations::args_min_len(args, 1)?;
 

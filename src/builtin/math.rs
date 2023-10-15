@@ -29,6 +29,7 @@ macro_rules! gen_math_fn {
                 /// - `crate::function::FunctionError::InvalidType` if any argument cannot be parsed as a value of type `$t`.
                 /// - `crate::function::FunctionError::ConvertArgsFailed` if parsing or conversion from arguments failed.
                 #[cfg_attr(docsrs, doc(cfg(feature = "math")))]
+                #[cfg(feature = "math")]
                 pub fn [<$name _ $t>](args: &[String]) -> FuncResult {
                     for arg in args {
                         validations::arg_type::<$t>(arg.clone())?;
