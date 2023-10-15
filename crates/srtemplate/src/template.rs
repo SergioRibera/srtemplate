@@ -1,4 +1,4 @@
-use concat_idents::concat_idents;
+use paste::paste;
 use dashmap::DashMap;
 use std::borrow::Cow;
 use std::sync::Arc;
@@ -8,6 +8,7 @@ use crate::error::SrTemplateError;
 use crate::parser::parser;
 use crate::render::render_nodes;
 
+#[cfg(feature = "number")]
 use crate::gen_math_use;
 
 use self::function::FuncResult;
@@ -64,22 +65,4 @@ impl<'a> Default for SrTemplate<'a> {
 
         tmp
     }
-}
-
-#[macro_export]
-macro_rules! gen_math_use {
-    ($tmp:ident) => {
-        gen_math_use!($tmp, add, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
-        gen_math_use!($tmp, sub, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
-        gen_math_use!($tmp, mul, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
-        gen_math_use!($tmp, div, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, f32, f64);
-    };
-
-    ($tmp: ident, $name: ident, $( $t: ty ),* ) => {
-        $(
-            concat_idents!(fn_name = $name, _, $t {
-                $tmp.add_function(stringify!(fn_name), builtin::fn_name);
-            });
-        )*
-    };
 }
