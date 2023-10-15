@@ -170,14 +170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "srtemplate_macros"
-version = "0.0.0"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "syn"
 version = "2.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
