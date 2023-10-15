@@ -20,6 +20,7 @@ use crate::template::validations;
 /// This function can return an error of [`FunctionError`] variant:
 /// - `FunctionError::InvalidArgument` if any of the specified environment variable names is invalid.
 #[cfg_attr(docsrs, doc(cfg(feature = "os")))]
+#[cfg(feature = "os")]
 pub fn env(args: &[String]) -> FuncResult {
     validations::args_min_len(args, 1)?;
 

@@ -8,16 +8,6 @@ mod os;
 #[cfg(feature = "text")]
 mod text;
 
-#[cfg_attr(docsrs, doc(cfg(feature = "math")))]
-#[cfg(feature = "math")]
-pub use math::*;
-#[cfg_attr(docsrs, doc(cfg(feature = "os")))]
-#[cfg(feature = "os")]
-pub use os::*;
-#[cfg_attr(docsrs, doc(cfg(feature = "text")))]
-#[cfg(feature = "text")]
-pub use text::*;
-
 #[cfg(feature = "typed_args")]
 use crate::helper::serialize::FromArgs;
 #[cfg(feature = "typed_args")]
