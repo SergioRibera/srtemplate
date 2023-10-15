@@ -42,3 +42,4 @@ fn main() {
 ## TODO's
 - [ ] I would like to change the way custom functions are implemented.
 - [ ] Macros to create custom functions
+- [ ] Better add_variable function to make more easy and performance managing Cow
