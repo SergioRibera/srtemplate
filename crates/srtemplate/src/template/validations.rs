@@ -29,7 +29,7 @@ pub fn arg_type<T: FromStr>(arg: String) -> ValidationResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::validations::{arg_type, args_min_len, args_max_len};
+    use crate::prelude::validations::{arg_type, args_max_len, args_min_len};
 
     #[test]
     fn test_arg_min_len() {

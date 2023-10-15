@@ -1,4 +1,4 @@
-use srtemplate::prelude::{validations, FuncResult, to_typed_args};
+use srtemplate::prelude::{to_typed_args, validations, FuncResult};
 use srtemplate::SrTemplate;
 
 fn merge(args: &[String]) -> FuncResult {

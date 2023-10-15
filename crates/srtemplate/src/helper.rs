@@ -34,7 +34,6 @@ mod test {
         assert!(a.is_err());
     }
 
-
     #[test]
     fn complete_parse_args() {
         let args = vec!["abc".to_string(), "54".to_string(), "4.5".to_string()];
