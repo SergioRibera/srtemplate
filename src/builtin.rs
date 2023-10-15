@@ -1,12 +1,12 @@
 #[cfg_attr(docsrs, doc(cfg(feature = "math")))]
 #[cfg(feature = "math")]
-mod math;
+pub(crate) mod math;
 #[cfg_attr(docsrs, doc(cfg(feature = "os")))]
 #[cfg(feature = "os")]
-mod os;
+pub(crate) mod os;
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
 #[cfg(feature = "text")]
-mod text;
+pub(crate) mod text;
 
 #[cfg(feature = "typed_args")]
 use crate::helper::serialize::FromArgs;

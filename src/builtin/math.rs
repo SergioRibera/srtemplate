@@ -62,7 +62,7 @@ macro_rules! gen_math_use {
     ($tmp: ident, $name: ident, $( $t: ty ),* ) => {
         $(
             paste! {
-                $tmp.add_function(stringify!([<$name _ $t>]), builtin::[<$name _ $t>]);
+                $tmp.add_function(stringify!([<$name _ $t>]), builtin::math::[<$name _ $t>]);
             }
         )*
     };
