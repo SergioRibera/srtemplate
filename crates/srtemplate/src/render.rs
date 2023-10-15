@@ -8,7 +8,7 @@ use log::debug;
 
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
-    vars: &DashMap<&str, String>,
+    vars: &DashMap<&str, Box<&dyn ToString>>,
     funcs: &DashMap<&str, Box<TemplateFunction>>,
 ) -> Result<String, SrTemplateError> {
     let mut res = String::new();
@@ -21,7 +21,7 @@ pub fn render_nodes(
                     .get(variable.as_str())
                     .ok_or(SrTemplateError::VariableNotFound(variable))?;
 
-                res.push_str(&variable);
+                res.push_str(&variable.to_string());
             }
             TemplateNode::Function(function, arguments) => {
                 let evaluated_arguments: Result<Vec<String>, SrTemplateError> = arguments
@@ -36,7 +36,7 @@ pub fn render_nodes(
                 #[cfg(feature = "debug")]
                 debug!("Evaluated Args: {evaluated_arguments:?}");
 
-                let result_of_function = func(evaluated_arguments);
+                let result_of_function = func(evaluated_arguments)?;
                 #[cfg(feature = "debug")]
                 debug!("Result of function: {result_of_function:?}");
 
@@ -59,7 +59,8 @@ mod tests {
 
     #[test]
     fn basic_render() {
-        let vars = DashMap::from_iter([("var", "World".to_string())]);
+        let vars: DashMap<&str, Box<&dyn ToString>> =
+            DashMap::from_iter([("var", Box::new(&"World" as &dyn ToString))]);
         let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
@@ -72,7 +73,8 @@ mod tests {
 
     #[test]
     fn basic_function_render() {
-        let vars = DashMap::from_iter([("var", "WoRld".to_string())]);
+        let vars: DashMap<&str, Box<&dyn ToString>> =
+            DashMap::from_iter([("var", Box::new(&"WoRlD" as &dyn ToString))]);
         let funcs = DashMap::from_iter([(
             "toLowerCase",
             Box::new(builtin::to_lower as TemplateFunction),
@@ -89,7 +91,8 @@ mod tests {
 
     #[test]
     fn recursive_function_render() {
-        let vars = DashMap::from_iter([("var", "    WoRlD ".to_string())]);
+        let vars: DashMap<&str, Box<&dyn ToString>> =
+            DashMap::from_iter([("var", Box::new(&"WoRlD" as &dyn ToString))]);
         let funcs = DashMap::from_iter([
             (
                 "toLowerCase",
@@ -109,7 +112,8 @@ mod tests {
 
     #[test]
     fn raw_string_render() {
-        let vars = DashMap::from_iter([("var", "    WoRlD ".to_string())]);
+        let vars: DashMap<&str, Box<&dyn ToString>> =
+            DashMap::from_iter([("var", Box::new(&"    WoRlD" as &dyn ToString))]);
         let funcs = DashMap::from_iter([
             (
                 "toLowerCase",

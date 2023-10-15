@@ -13,6 +13,7 @@ fn main() {
             srtemplate::SrTemplateError::FunctionNotImplemented(e) => {
                 println!("Function not supported: {e}")
             }
+            srtemplate::SrTemplateError::Function(e) => println!("Error procesing function: {e}"),
         },
     }
 }
