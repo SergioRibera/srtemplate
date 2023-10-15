@@ -10,7 +10,7 @@ fn bench_single_instance(b: &mut Bencher) {
     let input = "This is some text. {{ variable }} and {{ toLower(trim(variable)) }}";
 
     let mut ctx = SrTemplate::default();
-    ctx.add_variable("variable", "Variable".to_string());
+    ctx.add_variable("variable", &"Variable");
 
     b.iter(|| {
         ctx.render(input).unwrap();
@@ -23,7 +23,7 @@ fn bench_iter_instance(b: &mut Bencher) {
 
     b.iter(|| {
         let mut ctx = SrTemplate::default();
-        ctx.add_variable("variable", "Variable".to_string());
+        ctx.add_variable("variable", &"Variable");
         ctx.render(input).unwrap();
     })
 }
@@ -33,7 +33,7 @@ fn bench_clone_instance(b: &mut Bencher) {
     let input = "This is some text. {{ variable }} and {{ toLower(trim(variable)) }}";
 
     let mut ctx = SrTemplate::default();
-    ctx.add_variable("variable", "Variable".to_string());
+    ctx.add_variable("variable", &"Variable");
 
     b.iter(|| {
         for _i in 0..100 {
