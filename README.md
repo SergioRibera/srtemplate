@@ -20,7 +20,7 @@ Mr. strings template is a library that allows you to render just text templates.
 
 ## Basic example
 > [!NOTE]
-> See more examples [here](./crates/srtemplate/examples)
+> See more examples [here](./examples)
 
 ```rs
 use srtemplate::SrTemplate;
