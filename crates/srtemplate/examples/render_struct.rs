@@ -17,7 +17,7 @@ fn main() {
 
     let p = Point { x: 0.0, y: 5.025 };
 
-    ctx.add_variable("point", p);
+    ctx.add_variable("point", &p);
 
     let template = "Point {{ point }}";
     println!("Rendered: {}", ctx.render(template).unwrap());
