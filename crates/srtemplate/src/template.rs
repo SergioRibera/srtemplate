@@ -24,7 +24,7 @@ pub struct SrTemplate<'a> {
 }
 
 impl<'a> SrTemplate<'a> {
-    pub fn add_variable<T: ToString>(&mut self, name: &'a str, value: T) {
+    pub fn add_variable<T: ToString>(&mut self, name: &'a str, value: &T) {
         self.variables
             .insert(name, Box::new(value.to_string().into()));
     }
