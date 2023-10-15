@@ -1,5 +1,7 @@
 pub mod builtin;
 mod error;
+#[cfg(feature = "typed_args")]
+pub mod helper;
 mod parser;
 mod render;
 mod template;
@@ -13,4 +15,7 @@ pub mod prelude {
     pub use super::template::function::*;
     pub use super::template::validations;
     pub use super::{SrTemplate, TemplateFunction};
+
+    #[cfg(feature = "typed_args")]
+    pub use super::helper::serialize::*;
 }
