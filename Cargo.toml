@@ -3,10 +3,14 @@ name = "srtemplate"
 version = "0.2.0"
 edition = "2021"
 description = "Template String made with nom parser"
+categories = ["template-engine", "text-processing"]
+keywords = ["runtime", "string", "template"]
 authors = ["Sergio Ribera"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/SergioRibera/srtemplate"
 homepage = "https://github.com/SergioRibera/srtemplate"
+readme = "README.md"
+include = ["**/**/*.rs", "Cargo.toml", "rust-toolchain.toml", "rustfmt.toml"]
 
 [profile.dev]
 opt-level = 1
@@ -21,7 +25,7 @@ codegen-units = 1
 
 [features]
 default = ["text", "os", "math", "typed_args"]
-debug = ["log"]
+debug = ["dep:log"]
 text = []
 os = []
 math = ["dep:paste"]
