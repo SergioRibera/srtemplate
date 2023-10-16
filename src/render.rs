@@ -23,8 +23,8 @@ use log::debug;
 /// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
-    vars: &DashMap<&str, Box<Cow<'_, str>>>,
-    funcs: &DashMap<&str, Box<TemplateFunction>>,
+    vars: &DashMap<Cow<'_, str>, Box<Cow<'_, str>>>,
+    funcs: &DashMap<Cow<'_, str>, Box<TemplateFunction>>,
 ) -> Result<String, SrTemplateError> {
     let mut res = String::new();
 
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn basic_render() {
-        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("World")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("World")))]);
         let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
@@ -89,10 +89,10 @@ mod tests {
 
     #[test]
     fn basic_function_render() {
-        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("WoRlD")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("WoRlD")))]);
         let funcs = DashMap::from_iter([(
-            "toLowerCase",
-            Box::new(builtin::to_lower as TemplateFunction),
+            Cow::Borrowed("toLowerCase"),
+            Box::new(builtin::text::to_lower as TemplateFunction),
         )]);
         let template = "Hello {{ toLowerCase(var) }}";
         let (_, nodes) = parser(template).unwrap();
@@ -106,13 +106,13 @@ mod tests {
 
     #[test]
     fn recursive_function_render() {
-        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("WoRlD")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("WoRlD")))]);
         let funcs = DashMap::from_iter([
             (
-                "toLowerCase",
-                Box::new(builtin::to_lower as TemplateFunction),
+                Cow::Borrowed("toLowerCase"),
+                Box::new(builtin::text::to_lower as TemplateFunction),
             ),
-            ("trim", Box::new(builtin::trim as TemplateFunction)),
+            (Cow::Borrowed("trim"), Box::new(builtin::text::trim as TemplateFunction)),
         ]);
         let template = "Hello {{ toLowerCase(trim(var)) }}";
         let (_, nodes) = parser(template).unwrap();
@@ -126,13 +126,13 @@ mod tests {
 
     #[test]
     fn raw_string_render() {
-        let vars = DashMap::from_iter([("var", Box::new(Cow::Borrowed("    WoRlD")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("    WoRlD")))]);
         let funcs = DashMap::from_iter([
             (
-                "toLowerCase",
-                Box::new(builtin::to_lower as TemplateFunction),
+                Cow::Borrowed("toLowerCase"),
+                Box::new(builtin::text::to_lower as TemplateFunction),
             ),
-            ("trim", Box::new(builtin::trim as TemplateFunction)),
+            (Cow::Borrowed("trim"), Box::new(builtin::text::trim as TemplateFunction)),
         ]);
         let template = r#"Hello
 {{ toLowerCase(trim(var)) }}"#;

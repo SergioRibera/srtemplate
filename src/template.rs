@@ -24,17 +24,19 @@ pub type TemplateFunction = fn(&[String]) -> FuncResult;
 ///
 /// # Examples
 /// ```no_run
+/// use srtemplate::SrTemplate;
+///
 /// let mut ctx = SrTemplate::default();
 /// ctx.add_variable("var", &"World");
 /// ctx.add_variable("otherVar", &"Other");
 /// ctx.add_variable("number", &85u8);
 ///
-/// ctx.render("Hello {{ var }}! This is {{ otherVar }} and this is number: {{number}}").unwrap()
+/// ctx.render("Hello {{ var }}! This is {{ otherVar }} and this is number: {{number}}").unwrap();
 /// ```
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
-    variables: Arc<DashMap<&'a str, Box<Cow<'a, str>>>>,
-    functions: Arc<DashMap<&'a str, Box<TemplateFunction>>>,
+    variables: Arc<DashMap<Cow<'a, str>, Box<Cow<'a, str>>>>,
+    functions: Arc<DashMap<Cow<'a, str>, Box<TemplateFunction>>>,
 }
 
 impl<'a> SrTemplate<'a> {
@@ -44,9 +46,9 @@ impl<'a> SrTemplate<'a> {
     ///
     /// * `name`: Variable name, this name is the one you will use in the template
     /// * `value`: This is the value on which the template will be replaced in the template
-    pub fn add_variable<T: ToString>(&mut self, name: &'a str, value: &T) {
+    pub fn add_variable<U: Into<Cow<'a, str>>, T: ToString>(&self, name: U, value: &T) {
         self.variables
-            .insert(name, Box::new(value.to_string().into()));
+            .insert(name.into(), Box::new(value.to_string().into()));
     }
 
     /// Adds functions that can later be rendered in the template
@@ -55,8 +57,8 @@ impl<'a> SrTemplate<'a> {
     ///
     /// * `name`: Function name, this name is the one you will use in the template
     /// * `func`: This is the function that will be evaluated when it is called from the template
-    pub fn add_function(&mut self, name: &'a str, func: TemplateFunction) {
-        self.functions.insert(name, Box::new(func));
+    pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: TemplateFunction) {
+        self.functions.insert(name.into(), Box::new(func));
     }
 
     /// Renders text as a template, replacing variables and processing functions.
@@ -71,7 +73,7 @@ impl<'a> SrTemplate<'a> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```no_run
     /// use srtemplate::prelude::SrTemplate;
     /// use srtemplate::prelude::SrTemplateError;
     ///
@@ -92,7 +94,7 @@ impl<'a> SrTemplate<'a> {
 impl<'a> Default for SrTemplate<'a> {
     /// Generates an instance with all the builtin functions that are enabled from features
     fn default() -> Self {
-        let mut tmp = Self {
+        let tmp = Self {
             variables: Arc::default(),
             functions: Arc::default(),
         };
