@@ -58,7 +58,7 @@ pub const fn args_max_len(args: &[String], expected: usize) -> ValidationResult 
 ///
 /// ```no_run
 /// use std::str::FromStr;
-/// use srtemplate::prelude::arg_type;
+/// use srtemplate::prelude::validations::arg_type;
 ///
 /// let valid_arg = "42";
 /// let result = arg_type::<i32>(valid_arg.to_string());
