@@ -18,7 +18,7 @@ Mr. strings template is a library that allows you to render just text templates.
 
 ## Links
 - You can see a real example [here](https://sergioribera.github.io/srtemplate/), it is a real time template renderer.
-- Documentation [here](https://sergioribera.github.io/srtemplate/)
+- Documentation [here](https://docs.rs/srtemplate/)
 - [Wiki](https://github.com/SergioRibera/srtemplate/wiki)
 
 ## Features
