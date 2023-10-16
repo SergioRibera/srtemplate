@@ -28,6 +28,9 @@ use crate::prelude::FunctionError;
 /// # Example
 ///
 /// ```no_run
+/// use srtemplate::function::FuncResult;
+/// use srtemplate::prelude::to_typed_args;
+///
 /// fn custom_function(args: &[String]) -> FuncResult {
 ///     let (_a, _b) = to_typed_args::<(String, u8)>(args)?;
 
