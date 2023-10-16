@@ -17,7 +17,7 @@ fn to_title(args: &[String]) -> FuncResult {
 }
 
 fn main() {
-    let mut ctx = SrTemplate::default();
+    let ctx = SrTemplate::default();
     ctx.add_variable("var", &"mUnDo");
     ctx.add_function("toTitle", to_title);
 

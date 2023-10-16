@@ -14,7 +14,7 @@ fn merge(args: &[String]) -> FuncResult {
 }
 
 fn main() {
-    let mut ctx = SrTemplate::default();
+    let ctx = SrTemplate::default();
     ctx.add_variable("var", &"mUnDo");
     ctx.add_variable("other", &255u8);
 

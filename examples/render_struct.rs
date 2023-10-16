@@ -13,7 +13,7 @@ impl ToString for Point {
 }
 
 fn main() {
-    let mut ctx = SrTemplate::default();
+    let ctx = SrTemplate::default();
 
     let p = Point { x: 0.0, y: 5.025 };
 
