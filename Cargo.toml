@@ -11,6 +11,7 @@ repository = "https://github.com/SergioRibera/srtemplate"
 homepage = "https://github.com/SergioRibera/srtemplate"
 readme = "README.md"
 include = ["**/**/*.rs", "Cargo.toml", "rust-toolchain.toml", "rustfmt.toml"]
+exclude = ["examples/real_world/"]
 
 [package.metadata.docs.rs]
 all-features = true
