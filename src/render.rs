@@ -23,7 +23,7 @@ use log::debug;
 /// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
 pub fn render_nodes(
     nodes: Vec<TemplateNode>,
-    vars: &DashMap<Cow<'_, str>, Box<Cow<'_, str>>>,
+    vars: &DashMap<Cow<'_, str>, String>,
     funcs: &DashMap<Cow<'_, str>, Box<TemplateFunction>>,
 ) -> Result<String, SrTemplateError> {
     let mut res = String::new();
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn basic_render() {
-        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("World")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
         let template = "Hello {{ var }}";
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
@@ -89,7 +89,7 @@ mod tests {
 
     #[test]
     fn basic_function_render() {
-        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("WoRlD")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
         let funcs = DashMap::from_iter([(
             Cow::Borrowed("toLowerCase"),
             Box::new(builtin::text::to_lower as TemplateFunction),
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn recursive_function_render() {
-        let vars = DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("WoRlD")))]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn raw_string_render() {
         let vars =
-            DashMap::from_iter([(Cow::Borrowed("var"), Box::new(Cow::Borrowed("    WoRlD")))]);
+            DashMap::from_iter([(Cow::Borrowed("var"), "    WoRlD".to_string())]);
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),

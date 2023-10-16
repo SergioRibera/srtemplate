@@ -35,7 +35,7 @@ pub type TemplateFunction = fn(&[String]) -> FuncResult;
 /// ```
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
-    variables: Arc<DashMap<Cow<'a, str>, Box<Cow<'a, str>>>>,
+    variables: Arc<DashMap<Cow<'a, str>, String>>,
     functions: Arc<DashMap<Cow<'a, str>, Box<TemplateFunction>>>,
 }
 
@@ -47,8 +47,7 @@ impl<'a> SrTemplate<'a> {
     /// * `name`: Variable name, this name is the one you will use in the template
     /// * `value`: This is the value on which the template will be replaced in the template
     pub fn add_variable<U: Into<Cow<'a, str>>, T: ToString>(&self, name: U, value: &T) {
-        self.variables
-            .insert(name.into(), Box::new(value.to_string().into()));
+        self.variables.insert(name.into(), value.to_string());
     }
 
     /// Adds functions that can later be rendered in the template
