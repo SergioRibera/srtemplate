@@ -30,7 +30,7 @@ jobs:
           version: "v0.17.5"
       - name: Build
         working-directory: ./examples/real_world
-        run: trunk build --release
+        run: trunk build --release --public-url /srtemplate/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
