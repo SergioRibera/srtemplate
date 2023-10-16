@@ -129,8 +129,7 @@ mod tests {
 
     #[test]
     fn raw_string_render() {
-        let vars =
-            DashMap::from_iter([(Cow::Borrowed("var"), "    WoRlD".to_string())]);
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "    WoRlD".to_string())]);
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
