@@ -1,6 +1,6 @@
 #[cfg(feature = "debug")]
 use log::trace;
-use nom::multi::many1;
+use nom::multi::many0;
 use nom::{branch::alt, IResult};
 
 mod function;
@@ -37,5 +37,5 @@ pub enum TemplateNode {
 pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
     #[cfg(feature = "debug")]
     trace!("Start Parser: {input}");
-    many1(alt((function_parser, variable_parser, text_parser)))(input)
+    many0(alt((function_parser, variable_parser, text_parser)))(input)
 }

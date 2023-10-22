@@ -1,6 +1,15 @@
 use super::*;
 
 #[test]
+fn not_template() {
+    let s = "Hello World!";
+    let res = parser(s);
+
+    assert!(res.is_ok());
+    assert_eq!(res, Ok(("Hello World!", vec![])));
+}
+
+#[test]
 fn valid_syntax() {
     let s = "Hello {{ variable1 }}";
     let res = parser(s);
@@ -37,7 +46,7 @@ fn invalid_syntax_simple() {
     let s = "Hello { variable1 }";
     let res = parser(s);
 
-    assert!(res.is_err());
+    assert!(res.is_ok());
 }
 
 #[test]
