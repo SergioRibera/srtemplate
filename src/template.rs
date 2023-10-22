@@ -84,9 +84,14 @@ impl<'a> SrTemplate<'a> {
     /// }
     /// ```
     pub fn render(&self, text: &str) -> Result<String, SrTemplateError> {
-        let (left, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
+        let (r, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
         let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
-        Ok(format!("{left}{res}"))
+        let res = if text.starts_with(r) {
+            format!("{r}{res}")
+        } else {
+            format!("{res}{r}")
+        };
+        Ok(res)
     }
 }
 
