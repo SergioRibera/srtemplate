@@ -9,7 +9,7 @@ use test::Bencher;
 fn bench_single_instance(b: &mut Bencher) {
     let input = "This is some text. {{ variable }} and {{ toLower(trim(variable)) }}";
 
-    let mut ctx = SrTemplate::default();
+    let ctx = SrTemplate::default();
     ctx.add_variable("variable", &"Variable");
 
     b.iter(|| {
@@ -22,7 +22,7 @@ fn bench_iter_instance(b: &mut Bencher) {
     let input = "This is some text. {{ variable }} and {{ toLower(trim(variable)) }}";
 
     b.iter(|| {
-        let mut ctx = SrTemplate::default();
+        let ctx = SrTemplate::default();
         ctx.add_variable("variable", &"Variable");
         ctx.render(input).unwrap();
     })
@@ -32,7 +32,7 @@ fn bench_iter_instance(b: &mut Bencher) {
 fn bench_clone_instance(b: &mut Bencher) {
     let input = "This is some text. {{ variable }} and {{ toLower(trim(variable)) }}";
 
-    let mut ctx = SrTemplate::default();
+    let ctx = SrTemplate::default();
     ctx.add_variable("variable", &"Variable");
 
     b.iter(|| {
