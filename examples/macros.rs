@@ -5,13 +5,23 @@ fn merge(name: String, age: u8) {
     Ok(format!("{name}_{age}"))
 }
 
-#[derive(Default, Variable)]
+#[derive(Variable)]
 #[template(rename = "lowercase", rename_fields = "pascal")]
 pub struct User {
     name: String,
     last_name: String,
     #[template(ignore)]
     age: u8,
+}
+
+impl Default for User {
+    fn default() -> Self {
+        Self {
+            name: "Sergio".into(),
+            last_name: "Ribera".into(),
+            age: 22,
+        }
+    }
 }
 
 fn main() {
@@ -23,7 +33,7 @@ fn main() {
 
     ctx.add(&User::default());
 
-    let template = "Hola {{ merge(var, other) }}, {{ user.name }} {{ user.age }}";
+    let template = "Hola {{ merge(var, other) }}, {{ user.Name }} {{ user.LastName}}";
 
     println!("Rendered: {}", ctx.render(template).unwrap());
 }
