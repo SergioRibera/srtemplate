@@ -110,7 +110,7 @@ fn test_function_without_args() {
 
 #[test]
 fn test_function_multiple_param() {
-    let input = "{{ toLowerCase(trim(variable), variable1, variable2) }}";
+    let input = "{{ toLowerCase(variable1, trim(variable), variable2) }}";
     let result = parser(input);
     assert_eq!(
         result,
@@ -119,11 +119,11 @@ fn test_function_multiple_param() {
             vec![TemplateNode::Function(
                 "toLowerCase".to_string(),
                 vec![
+                    TemplateNode::Variable("variable1".to_string()),
                     TemplateNode::Function(
                         "trim".to_string(),
                         vec![TemplateNode::Variable("variable".to_string()),]
                     ),
-                    TemplateNode::Variable("variable1".to_string()),
                     TemplateNode::Variable("variable2".to_string()),
                 ]
             )]

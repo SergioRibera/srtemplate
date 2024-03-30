@@ -12,7 +12,7 @@ use super::TemplateNode;
 
 fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, _) = multispace0(input)?;
-    let (input, function_name) = recognize(many1(none_of("({{}}")))(input)?;
+    let (input, function_name) = recognize(many1(none_of(", ({{}}")))(input)?;
     let (input, _) = multispace0(input)?;
     let (input, arguments) = delimited(
         tag("("),
