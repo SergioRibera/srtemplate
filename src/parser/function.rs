@@ -1,5 +1,6 @@
 #[cfg(feature = "debug")]
 use log::debug;
+use nom::bytes::complete::take_until;
 use nom::character::complete::none_of;
 use nom::combinator::recognize;
 use nom::multi::{many1, separated_list0};
@@ -12,11 +13,14 @@ use super::TemplateNode;
 
 fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
     let (input, _) = multispace0(input)?;
-    let (input, function_name) = recognize(many1(none_of(", ({{}}")))(input)?;
+    let (input, function_name) = recognize(many1(none_of("\",({{}}")))(input)?;
     let (input, _) = multispace0(input)?;
     let (input, arguments) = delimited(
         tag("("),
-        separated_list0(tag(","), alt((internal_function_parser, argument_parser))),
+        separated_list0(
+            tag(","),
+            alt((internal_function_parser, raw_string, argument_parser)),
+        ),
         tag(")"),
     )(input)?;
 
@@ -38,8 +42,19 @@ pub(super) fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
     Ok((input, func))
 }
 
+pub(super) fn raw_string(input: &str) -> IResult<&str, TemplateNode> {
+    let (input, _) = multispace0(input)?;
+    let (input, _) = tag("\"")(input)?;
+    let (input, content) = take_until("\"")(input)?;
+    let (input, _) = tag("\"")(input)?;
+    let (input, _) = multispace0(input)?;
+
+    Ok((input, TemplateNode::InnerText(content.to_string())))
+}
+
 fn argument_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, arg) = recognize(many1(none_of("),{{}}")))(input)?;
+    let (input, _) = multispace0(input)?;
+    let (input, arg) = recognize(many1(none_of("\"),{{}}")))(input)?;
     let arg = arg.trim();
     #[cfg(feature = "debug")]
     debug!("Input Arg: {input} - ArgName: {arg}");

@@ -30,7 +30,7 @@ pub fn render_nodes(
 
     for node in nodes {
         match node {
-            TemplateNode::Text(text) => res.push_str(&text),
+            TemplateNode::Text(text) | TemplateNode::InnerText(text) => res.push_str(&text),
             TemplateNode::Variable(variable) => {
                 let variable = vars
                     .get(variable.as_str())
@@ -141,13 +141,14 @@ mod tests {
             ),
         ]);
         let template = r#"Hello
-{{ toLowerCase(trim(var)) }}"#;
+{{ toLowerCase(trim(var, "  !   ")) }}"#;
         let (_, nodes) = parser(template).unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
+        println!("Err: {res:?}");
         assert!(res.is_ok());
 
         let res = res.unwrap();
-        assert_eq!(res, "Hello\nworld".to_string());
+        assert_eq!(res, "Hello\nworld !".to_string());
     }
 }

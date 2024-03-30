@@ -12,6 +12,8 @@ mod test;
 use function::function_parser;
 use values::{text_parser, variable_parser};
 
+use crate::parser::values::raw_string_parser;
+
 /// Variants of the types of nodes that exist in the syntax
 #[derive(Debug, PartialEq, Eq)]
 pub enum TemplateNode {
@@ -19,6 +21,8 @@ pub enum TemplateNode {
     Variable(String),
     /// Functions to be rendered
     Function(String, Vec<TemplateNode>),
+    /// Plain text, pass as variable
+    InnerText(String),
     /// Plain text, this will be ignored in the rendering
     Text(String),
 }
@@ -37,5 +41,10 @@ pub enum TemplateNode {
 pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
     #[cfg(feature = "debug")]
     trace!("Start Parser: {input}");
-    many0(alt((function_parser, variable_parser, text_parser)))(input)
+    many0(alt((
+        function_parser,
+        raw_string_parser,
+        variable_parser,
+        text_parser,
+    )))(input)
 }

@@ -132,8 +132,45 @@ fn test_function_multiple_param() {
 }
 
 #[test]
+fn raw_text() {
+    let s = r#"Hello {{ "ThIs Is a EXAMPLE" }}"#;
+    let res = parser(s);
+
+    assert_eq!(
+        res,
+        Ok((
+            "",
+            vec![
+                TemplateNode::Text("Hello ".to_string()),
+                TemplateNode::InnerText("ThIs Is a EXAMPLE".to_string())
+            ]
+        ))
+    );
+}
+
+#[test]
+fn inner_function_raw_text() {
+    let s = r#"Hello {{ toLowerCase("ThIs Is a EXAMPLE") }}"#;
+    let res = parser(s);
+
+    assert_eq!(
+        res,
+        Ok((
+            "",
+            vec![
+                TemplateNode::Text("Hello ".to_string()),
+                TemplateNode::Function(
+                    "toLowerCase".to_string(),
+                    vec![TemplateNode::InnerText("ThIs Is a EXAMPLE".to_string())]
+                ),
+            ]
+        ))
+    );
+}
+
+#[test]
 fn recursive_function_syntax() {
-    let s = "Hello {{ toLowerCase(trim(split(variable1, \"|\"))) }}";
+    let s = r#"Hello {{ toLowerCase(trim(split(variable1, "|"))) }}"#;
     let res = parser(s);
 
     assert_eq!(
@@ -150,7 +187,7 @@ fn recursive_function_syntax() {
                             "split".to_string(),
                             vec![
                                 TemplateNode::Variable("variable1".to_string()),
-                                TemplateNode::Variable("\"|\"".to_string())
+                                TemplateNode::InnerText("|".to_string())
                             ]
                         )]
                     )]
