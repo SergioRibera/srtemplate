@@ -1,7 +1,7 @@
 #[cfg(feature = "debug")]
 use log::debug;
 use nom::character::complete::none_of;
-use nom::combinator::{opt, recognize};
+use nom::combinator::recognize;
 use nom::multi::{many1, separated_list0};
 use nom::{
     branch::alt, bytes::complete::tag, character::complete::multispace0, sequence::delimited,
@@ -31,9 +31,9 @@ fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
 }
 
 pub(super) fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, _) = opt(tag("{{"))(input)?;
+    let (input, _) = tag("{{")(input)?;
     let (input, func) = internal_function_parser(input)?;
-    let (input, _) = opt(tag("}}"))(input)?;
+    let (input, _) = tag("}}")(input)?;
 
     Ok((input, func))
 }

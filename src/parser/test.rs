@@ -58,6 +58,14 @@ fn function_syntax() {
 }
 
 #[test]
+fn function_outside() {
+    let s = "Hello trim(var) {{ toLowerCase(variable1) }}";
+    let res = parser(s);
+
+    assert!(res.is_ok());
+}
+
+#[test]
 fn test_variable_parser() {
     let input = "{{ variable }}";
     let result = variable_parser(input);
