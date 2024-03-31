@@ -11,35 +11,50 @@ use nom::{
 
 use super::TemplateNode;
 
-fn internal_function_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, _) = multispace0(input)?;
-    let (input, function_name) = recognize(many1(none_of("\",({{}}")))(input)?;
-    let (input, _) = multispace0(input)?;
-    let (input, arguments) = delimited(
-        tag("("),
-        separated_list0(
-            tag(","),
-            alt((internal_function_parser, raw_string, argument_parser)),
-        ),
-        tag(")"),
-    )(input)?;
+fn internal_function_parser<'a>(
+    start: &'a str,
+    close: &'a str,
+) -> impl FnMut(&'a str) -> IResult<&str, TemplateNode> {
+    move |input| {
+        let (input, _) = multispace0(input)?;
+        let (input, function_name) =
+            recognize(many1(none_of(format!("\",({start}{close}").as_str())))(input)?;
+        let (input, _) = multispace0(input)?;
+        let (input, arguments) = delimited(
+            tag("("),
+            separated_list0(
+                tag(","),
+                alt((
+                    internal_function_parser(start, close),
+                    raw_string,
+                    argument_parser(start, close),
+                )),
+            ),
+            tag(")"),
+        )(input)?;
 
-    #[cfg(feature = "debug")]
-    debug!("FunctionName: {function_name} - Args: {arguments:?} - input: {input}");
-    let (input, _) = multispace0(input)?;
+        #[cfg(feature = "debug")]
+        debug!("FunctionName: {function_name} - Args: {arguments:?} - input: {input}");
+        let (input, _) = multispace0(input)?;
 
-    Ok((
-        input,
-        TemplateNode::Function(function_name.to_string(), arguments),
-    ))
+        Ok((
+            input,
+            TemplateNode::Function(function_name.to_string(), arguments),
+        ))
+    }
 }
 
-pub(super) fn function_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, _) = tag("{{")(input)?;
-    let (input, func) = internal_function_parser(input)?;
-    let (input, _) = tag("}}")(input)?;
+pub(super) fn function_parser<'a>(
+    start: &'a str,
+    close: &'a str,
+) -> impl FnMut(&'a str) -> IResult<&str, TemplateNode> {
+    move |input| {
+        let (input, _) = tag(start)(input)?;
+        let (input, func) = internal_function_parser(start, close)(input)?;
+        let (input, _) = tag(close)(input)?;
 
-    Ok((input, func))
+        Ok((input, func))
+    }
 }
 
 pub(super) fn raw_string(input: &str) -> IResult<&str, TemplateNode> {
@@ -52,11 +67,17 @@ pub(super) fn raw_string(input: &str) -> IResult<&str, TemplateNode> {
     Ok((input, TemplateNode::InnerText(content.to_string())))
 }
 
-fn argument_parser(input: &str) -> IResult<&str, TemplateNode> {
-    let (input, _) = multispace0(input)?;
-    let (input, arg) = recognize(many1(none_of("\"),{{}}")))(input)?;
-    let arg = arg.trim();
-    #[cfg(feature = "debug")]
-    debug!("Input Arg: {input} - ArgName: {arg}");
-    Ok((input, TemplateNode::Variable(arg.to_string())))
+fn argument_parser<'a>(
+    start: &'a str,
+    close: &'a str,
+) -> impl FnMut(&'a str) -> IResult<&str, TemplateNode> {
+    move |input| {
+        let (input, _) = multispace0(input)?;
+        let (input, arg) =
+            recognize(many1(none_of(format!("\"),{start}{close}").as_str())))(input)?;
+        let arg = arg.trim();
+        #[cfg(feature = "debug")]
+        debug!("Input Arg: {input} - ArgName: {arg}");
+        Ok((input, TemplateNode::Variable(arg.to_string())))
+    }
 }

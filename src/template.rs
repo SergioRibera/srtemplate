@@ -35,6 +35,8 @@ pub type TemplateFunction = fn(&[String]) -> FuncResult;
 /// ```
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
+    delimiter_start: Cow<'a, str>,
+    delimiter_close: Cow<'a, str>,
     variables: Arc<DashMap<Cow<'a, str>, String>>,
     functions: Arc<DashMap<Cow<'a, str>, Box<TemplateFunction>>>,
 }
@@ -58,6 +60,21 @@ impl<'a> SrTemplate<'a> {
     /// * `func`: This is the function that will be evaluated when it is called from the template
     pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: TemplateFunction) {
         self.functions.insert(name.into(), Box::new(func));
+    }
+
+    /// Sets the delimiters for the template string.
+    ///
+    /// This function allows you to define the start and end delimiters that will be used to identify
+    /// the content within the template string. The delimiters can be any string or character sequence
+    /// that does not conflict with the template content.
+    ///
+    /// # Arguments
+    ///
+    /// * `start`: The start delimiter. This is a string slice or a type that can be converted into a `Cow<str>`.
+    /// * `close`: The end delimiter. This is a string slice or a type that can be converted into a `Cow<str>`.
+    pub fn set_delimiter<U: Into<Cow<'a, str>>>(&mut self, start: U, close: U) {
+        self.delimiter_start = start.into();
+        self.delimiter_close = close.into();
     }
 
     /// Renders text as a template, replacing variables and processing functions.
@@ -85,7 +102,10 @@ impl<'a> SrTemplate<'a> {
     /// ```
     pub fn render<T: AsRef<str>>(&self, text: T) -> Result<String, SrTemplateError> {
         let text = text.as_ref();
-        let (r, nodes) = parser(text).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
+        let start = self.delimiter_start.as_ref();
+        let close = self.delimiter_close.as_ref();
+        let (r, nodes) =
+            parser(text, start, close).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
         let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
         let res = if text.starts_with(r) {
             format!("{r}{res}")
@@ -100,6 +120,8 @@ impl<'a> Default for SrTemplate<'a> {
     /// Generates an instance with all the builtin functions that are enabled from features
     fn default() -> Self {
         let tmp = Self {
+            delimiter_start: "{{".into(),
+            delimiter_close: "}}".into(),
             variables: Arc::default(),
             functions: Arc::default(),
         };

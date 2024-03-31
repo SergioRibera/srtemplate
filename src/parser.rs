@@ -38,13 +38,17 @@ pub enum TemplateNode {
 /// # Returns
 ///
 /// An `IResult` containing the remaining unparsed input (if any) and a vector of `TemplateNode`s, representing the parsed elements of the template.
-pub fn parser(input: &str) -> IResult<&str, Vec<TemplateNode>> {
+pub fn parser<'a>(
+    input: &'a str,
+    start: &'a str,
+    close: &'a str,
+) -> IResult<&'a str, Vec<TemplateNode>> {
     #[cfg(feature = "debug")]
-    trace!("Start Parser: {input}");
+    trace!("Start Parser: {input} with delimiters: {start} - {close}");
     many0(alt((
-        function_parser,
-        raw_string_parser,
-        variable_parser,
-        text_parser,
+        function_parser(start, close),
+        raw_string_parser(start, close),
+        variable_parser(start, close),
+        text_parser(start),
     )))(input)
 }

@@ -78,7 +78,7 @@ mod tests {
     fn basic_render() {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
         let template = "Hello {{ var }}";
-        let (_, nodes) = parser(template).unwrap();
+        let (_, nodes) = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
 
         assert!(res.is_ok());
@@ -95,7 +95,7 @@ mod tests {
             Box::new(builtin::text::to_lower as TemplateFunction),
         )]);
         let template = "Hello {{ toLowerCase(var) }}";
-        let (_, nodes) = parser(template).unwrap();
+        let (_, nodes) = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         assert!(res.is_ok());
@@ -118,7 +118,7 @@ mod tests {
             ),
         ]);
         let template = "Hello {{ toLowerCase(trim(var)) }}";
-        let (_, nodes) = parser(template).unwrap();
+        let (_, nodes) = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         assert!(res.is_ok());
@@ -142,7 +142,7 @@ mod tests {
         ]);
         let template = r#"Hello
 {{ toLowerCase(trim(var, "  !   ")) }}"#;
-        let (_, nodes) = parser(template).unwrap();
+        let (_, nodes) = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         println!("Err: {res:?}");
