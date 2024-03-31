@@ -38,7 +38,6 @@ typed_args = []
 
 [dependencies]
 nom = "7.1.3"
-anyhow = "1.0.75"
 dashmap = "5.5.3"
 thiserror = "1.0.49"
 paste = { version = "1.0.14", optional = true }
