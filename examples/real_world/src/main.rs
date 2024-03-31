@@ -107,7 +107,7 @@ fn App() -> impl IntoView {
                             />
                         </div>
                         <div class="flex flex-col">
-                            <span class="px-4 pt-3 block">Start Delimiter</span>
+                            <span class="px-4 pt-3 block">End Delimiter</span>
                             <input
                                 class="bg-orange-300/30 text-black focus:outline-none p-3 max-w-[200px]"
                                 prop:type="text"
