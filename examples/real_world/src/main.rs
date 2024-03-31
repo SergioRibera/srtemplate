@@ -27,6 +27,9 @@ fn App() -> impl IntoView {
     let input_name_ref = create_node_ref::<Input>();
     let input_value_ref = create_node_ref::<Input>();
 
+    let input_delimiter_start_ref = create_node_ref::<Input>();
+    let input_delimiter_close_ref = create_node_ref::<Input>();
+
     create_effect(move |_| {
         for (k, v) in variables.get().iter() {
             set_ctx.update(move |last| last.add_variable(k.clone(), v));
@@ -89,9 +92,44 @@ fn App() -> impl IntoView {
                     />
                 </div>
                 <div class="flex flex-col gap-4 lg:ml-4">
+                    <div class="flex flex-col">
+                        <h3 class="text-2xl text-bold">Delimiter</h3>
+                    </div>
+                    <div class="flex flex-row justify-between items-end mb-2">
+                        <div class="flex flex-col">
+                            <span class="pt-3 block">Start Delimiter</span>
+                            <input
+                                class="bg-orange-300/30 text-black focus:outline-none p-3 max-w-[200px]"
+                                prop:type="text"
+                                prop:placeholder="{{"
+                                prop:defaultValue="{{"
+                                node_ref=input_delimiter_start_ref
+                            />
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="px-4 pt-3 block">Start Delimiter</span>
+                            <input
+                                class="bg-orange-300/30 text-black focus:outline-none p-3 max-w-[200px]"
+                                prop:type="text"
+                                prop:placeholder="}}"
+                                prop:defaultValue="}}"
+                                node_ref=input_delimiter_close_ref
+                            />
+                        </div>
+                        <button
+                            class="bg-orange-300/50 hover:bg-orange-300/70 h-[48px] px-4 py-3"
+                            on:click=move |_| set_ctx.update(|ctx| {
+                                let Some(start) = and(input_delimiter_start_ref.get(), |v| !v.is_empty()) else { return; };
+                                let Some(close) = and(input_delimiter_close_ref.get(), |v| !v.is_empty()) else { return; };
+                                ctx.set_delimiter(start.value(), close.value());
+                            })
+                        >
+                            Change
+                        </button>
+                    </div>
                     <h3 class="text-2xl text-bold">Render Result</h3>
                     <textarea
-                        class="bg-orange-300/30 resize-none w-[500px] h-[520px] focus:outline-none p-4"
+                        class="bg-orange-300/30 resize-none w-[500px] h-[365px] focus:outline-none p-4"
                         prop:readonly={true}
                         prop:defaultValue={rendered}
                     />

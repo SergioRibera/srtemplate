@@ -1363,9 +1363,8 @@ dependencies = [
 
 [[package]]
 name = "srtemplate"
-version = "0.2.2"
+version = "0.2.5"
 dependencies = [
- "anyhow",
  "dashmap",
  "nom",
  "paste",
