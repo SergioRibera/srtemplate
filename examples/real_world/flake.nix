@@ -25,7 +25,7 @@
           fenix = inputs.fenix.packages;
         };
       in {
-        inherit (libBundle) apps packages devShells;
+        inherit (libBundle) devShells;
       }
     );
 }
