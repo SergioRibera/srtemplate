@@ -25,7 +25,7 @@ let
   # fenix: rustup replacement for reproducible builds
   toolchain = fenix.${system}.fromToolchainFile {
     file = ./rust-toolchain.toml;
-    sha256 = "sha256-0npjLjvxhiQcBh+W9URwg0BQN7CuItPEtsRAgOb6/1o=";
+    sha256 = "sha256-3St/9/UKo/6lz2Kfq2VmlzHyufduALpiIKaaKX4Pq0g=";
   };
   # crane: cargo and artifacts manager
   craneLib = crane.${system}.overrideToolchain toolchain;
@@ -44,6 +44,7 @@ in
         trunk
         leptosfmt
         cargo-make
+        cargo-release
         binaryen
       ];
   };
