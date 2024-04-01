@@ -12,7 +12,7 @@ pub enum SrTemplateError {
     VariableNotFound(String),
 
     /// This error appears when the function to be rendered does not exist.
-    #[error("Function not imlemented: {0}")]
+    #[error("Function not implemented: {0}")]
     FunctionNotImplemented(String),
 
     /// This error appears when the function to be rendered has suffered from an internal error.

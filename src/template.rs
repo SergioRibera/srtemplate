@@ -62,6 +62,61 @@ impl<'a> SrTemplate<'a> {
         self.functions.insert(name.into(), Box::new(func));
     }
 
+    /// Checks if a variable exists in the template string by its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the variable to check.
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - `true` if the variable exists, `false` otherwise.
+    /// ```
+    pub fn contains_variable<T: Into<Cow<'a, str>>>(&self, name: T) -> bool {
+        self.variables.contains_key(&name.into())
+    }
+
+    /// Checks if a function exists in the template string by its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the function to check.
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - `true` if the function exists, `false` otherwise.
+    pub fn contains_function<T: Into<Cow<'a, str>>>(&self, name: T) -> bool {
+        self.functions.contains_key(&name.into())
+    }
+
+    /// Removes a variable from the template string by its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the variable to remove.
+    pub fn remove_variable<T: Into<Cow<'a, str>>>(&self, name: T) {
+        self.variables.remove(&name.into());
+    }
+
+    /// Removes a function from the template string by its name.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the function to remove.
+    pub fn remove_function<T: Into<Cow<'a, str>>>(&self, name: T) {
+        self.functions.remove(&name.into());
+    }
+
+    /// Clears all variables from the template string.
+    pub fn clear_variables(&self) {
+        self.variables.clear();
+    }
+
+    /// Clears all functions from the template string.
+    pub fn clear_functions(&self) {
+        self.functions.clear();
+    }
+
     /// Sets the delimiters for the template string.
     ///
     /// This function allows you to define the start and end delimiters that will be used to identify
