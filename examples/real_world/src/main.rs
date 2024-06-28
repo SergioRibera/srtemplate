@@ -13,6 +13,20 @@ fn and(o: Option<HtmlElement<Input>>, f: impl Fn(String) -> bool) -> Option<Html
     None
 }
 
+fn render_time(ctx: SrTemplate, s: &str) -> (String, String) {
+    let start = instant::Instant::now();
+    let render = ctx.render(s);
+    let duration = start.elapsed();
+    let seconds = duration.as_secs();
+    let milliseconds = duration.subsec_millis();
+    let nanoseconds = duration.subsec_nanos();
+
+    (
+        format!("{render:?}"),
+        format!("{}chars {seconds}s {milliseconds}ms {nanoseconds}ns", s.chars().count()),
+    )
+}
+
 #[component]
 fn App() -> impl IntoView {
     let (ctx, set_ctx) = create_signal(SrTemplate::default());
@@ -24,18 +38,9 @@ fn App() -> impl IntoView {
     let (time_str, set_time) = create_signal(String::from("0s 0ms 0ns"));
 
     let rendered = create_memo(move |_| {
-        let start = instant::Instant::now();
-        let render = ctx.get().render(&template_str.get());
-        let duration = start.elapsed();
-        let seconds = duration.as_secs();
-        let milliseconds = duration.subsec_millis();
-        let nanoseconds = duration.subsec_nanos();
-
-        set_time.update(|t| {
-            *t = format!("{seconds}s {milliseconds}ms {nanoseconds}ns");
-        });
-
-        format!("{render:?}")
+        let (render, time) = render_time(ctx.get(), &template_str.get());
+        set_time.set(time);
+        render
     });
 
     let input_name_ref = create_node_ref::<Input>();
@@ -141,7 +146,19 @@ fn App() -> impl IntoView {
                             Change
                         </button>
                     </div>
-                    <h3 class="text-2xl text-bold">Render Result<span class="text-xs ml-2">{time_str}</span></h3>
+                    <div class="flex flex-row gap-2 items-end">
+                        <button
+                            class="bg-orange-300/50 hover:bg-orange-300/70 px-4 py-3"
+                            on:click=move |_| set_time.update(|last| {
+                                let (_, time) = render_time(ctx.get(), &template_str.get());
+                                *last = time;
+                            })
+                        >
+                            Rerender
+                        </button>
+                        <h3 class="text-2xl text-bold"> Render Result </h3>
+                        <span class="text-xs mb-1">{time_str}</span>
+                    </div>
                     <textarea
                         class="bg-orange-300/30 resize-none w-[500px] h-[365px] focus:outline-none p-4"
                         prop:readonly={true}
