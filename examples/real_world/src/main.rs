@@ -21,8 +21,22 @@ fn App() -> impl IntoView {
         "    test    ".to_string(),
     )]));
     let (template_str, set_template) = create_signal(String::from("This is a {{ trim(var) }}"));
+    let (time_str, set_time) = create_signal(String::from("0s 0ms 0ns"));
 
-    let rendered = create_memo(move |_| format!("{:?}", ctx.get().render(&template_str.get())));
+    let rendered = create_memo(move |_| {
+        let start = instant::Instant::now();
+        let render = ctx.get().render(&template_str.get());
+        let duration = start.elapsed();
+        let seconds = duration.as_secs();
+        let milliseconds = duration.subsec_millis();
+        let nanoseconds = duration.subsec_nanos();
+
+        set_time.update(|t| {
+            *t = format!("{seconds}s {milliseconds}ms {nanoseconds}ns");
+        });
+
+        format!("{render:?}")
+    });
 
     let input_name_ref = create_node_ref::<Input>();
     let input_value_ref = create_node_ref::<Input>();
@@ -127,7 +141,7 @@ fn App() -> impl IntoView {
                             Change
                         </button>
                     </div>
-                    <h3 class="text-2xl text-bold">Render Result</h3>
+                    <h3 class="text-2xl text-bold">Render Result<span class="text-xs ml-2">{time_str}</span></h3>
                     <textarea
                         class="bg-orange-300/30 resize-none w-[500px] h-[365px] focus:outline-none p-4"
                         prop:readonly={true}
