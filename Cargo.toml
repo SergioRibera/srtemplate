@@ -36,12 +36,19 @@ os = []
 math = ["dep:paste"]
 typed_args = []
 
+[dev-dependencies]
+divan = "0.1.14"
+
 [dependencies]
 nom = "7.1.3"
 dashmap = "5.5.3"
 thiserror = "1.0.49"
 paste = { version = "1.0.14", optional = true }
 log = { version = "0.4.20", optional = true }
+
+[[bench]]
+name = "parser"
+harness = false
 
 [[example]]
 name = "parse_args"
