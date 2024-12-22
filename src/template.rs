@@ -159,14 +159,9 @@ impl<'a> SrTemplate<'a> {
         let text = text.as_ref();
         let start = self.delimiter_start.as_ref();
         let close = self.delimiter_close.as_ref();
-        let (r, nodes) =
+        let nodes =
             parser(text, start, close).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
         let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
-        let res = if text.starts_with(r) {
-            format!("{r}{res}")
-        } else {
-            format!("{res}{r}")
-        };
         Ok(res)
     }
 }

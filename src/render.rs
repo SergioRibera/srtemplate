@@ -30,11 +30,11 @@ pub fn render_nodes(
 
     for node in nodes {
         match node {
-            TemplateNode::Text(text) | TemplateNode::InnerText(text) => res.push_str(&text),
+            TemplateNode::RawText(text) | TemplateNode::String(text) => res.push_str(&text),
             TemplateNode::Variable(variable) => {
                 let variable = vars
-                    .get(variable.as_str())
-                    .ok_or(SrTemplateError::VariableNotFound(variable))?;
+                    .get(variable)
+                    .ok_or(SrTemplateError::VariableNotFound(variable.to_owned()))?;
 
                 res.push_str(&variable);
             }
@@ -49,8 +49,8 @@ pub fn render_nodes(
                 debug!("Evaluated Args: {evaluated_arguments:?}");
 
                 let result_of_function = funcs
-                    .get(function.as_str())
-                    .ok_or(SrTemplateError::FunctionNotImplemented(function))?(
+                    .get(function)
+                    .ok_or(SrTemplateError::FunctionNotImplemented(function.to_owned()))?(
                     &evaluated_arguments,
                 )?;
 
@@ -78,7 +78,7 @@ mod tests {
     fn basic_render() {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
         let template = "Hello {{ var }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
+        let nodes = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &DashMap::new());
 
         assert!(res.is_ok());
@@ -95,7 +95,7 @@ mod tests {
             Box::new(builtin::text::to_lower as TemplateFunction),
         )]);
         let template = "Hello {{ toLowerCase(var) }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
+        let nodes = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         assert!(res.is_ok());
@@ -118,7 +118,7 @@ mod tests {
             ),
         ]);
         let template = "Hello {{ toLowerCase(trim(var)) }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
+        let nodes = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         assert!(res.is_ok());
@@ -142,7 +142,7 @@ mod tests {
         ]);
         let template = r#"Hello
 {{ toLowerCase(trim(var, "  !   ")) }}"#;
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
+        let nodes = parser(template, "{{", "}}").unwrap();
         let res = render_nodes(nodes, &vars, &funcs);
 
         println!("Err: {res:?}");
