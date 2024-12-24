@@ -11,7 +11,7 @@ fn not_template() {
 
 #[test]
 fn valid_syntax() {
-    let s = "Hello {{ variable1 }}";
+    let s = "Hello {{ variable1 }} test {{ _var_ia_ble  }}";
     let res = parser(s, "{{", "}}");
 
     assert!(res.is_ok());
@@ -99,7 +99,7 @@ fn test_function_without_args() {
 
 #[test]
 fn test_function_multiple_param() {
-    let input = "{{ toLowerCase(variable1, trim(variable), variable2) }}";
+    let input = "{{ toLowerCase(variable1, trim(variable), add_u8(10, 15), variable2) }}";
     let result = parser(input, "{{", "}}");
     assert_eq!(
         result,
@@ -108,6 +108,10 @@ fn test_function_multiple_param() {
             vec![
                 TemplateNode::Variable("variable1"),
                 TemplateNode::Function("trim", vec![TemplateNode::Variable("variable"),]),
+                TemplateNode::Function(
+                    "add_u8",
+                    vec![TemplateNode::Number("10"), TemplateNode::Number("15")]
+                ),
                 TemplateNode::Variable("variable2"),
             ]
         )])

@@ -184,7 +184,10 @@ impl<'a> Parser<'a> {
 
     fn identifier(&mut self) -> Result<(usize, usize), Error> {
         let start = self.position;
-        while !self.is_eof() && self.chars[self.position].is_ascii_alphanumeric() {
+        while !self.is_eof()
+            && (self.chars[self.position].is_ascii_alphanumeric()
+                || self.chars[self.position] == b'_')
+        {
             self.advance();
         }
 
@@ -195,8 +198,8 @@ impl<'a> Parser<'a> {
         let mut is_float = false;
         let start = self.position;
 
-        while !self.is_eof() && self.chars[self.position].is_ascii_digit()
-            || self.chars[self.position] == b'.'
+        while !self.is_eof()
+            && (self.chars[self.position].is_ascii_digit() || self.chars[self.position] == b'.')
         {
             if self.chars[self.position] == b'.' && is_float {
                 return Err(self.make_error("The float just need one '.'", self.position));
