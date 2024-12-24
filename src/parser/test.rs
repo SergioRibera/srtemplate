@@ -62,7 +62,13 @@ fn function_outside() {
     let s = "Hello trim(var) {{ toLowerCase(variable1) }}";
     let res = parser(s, "{{", "}}");
 
-    assert_eq!(res, Ok(vec![]));
+    assert_eq!(
+        res,
+        Ok(vec![
+            TemplateNode::RawText("Hello trim(var) "),
+            TemplateNode::Function("toLowerCase", vec![TemplateNode::Variable("variable1")])
+        ])
+    );
 }
 
 #[test]

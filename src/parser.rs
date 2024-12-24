@@ -107,6 +107,11 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn check_delimiter(&self, delim: &str) -> bool {
+        self.position + delim.len() <= self.chars.len()
+            && &self.chars[self.position..self.position + delim.len()] == delim.as_bytes()
+    }
+
     fn advance_delimiter(&mut self, delim: &str) -> bool {
         if self.check_delimiter(delim) {
             if self.position + delim.len() <= self.chars.len() {
@@ -129,11 +134,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn check_delimiter(&self, delim: &str) -> bool {
-        self.position + delim.len() <= self.chars.len()
-            && &self.chars[self.position..self.position + delim.len()] == delim.as_bytes()
-    }
-
     fn next_token(&mut self) -> Result<SintaxNode, Error> {
         let start = self.position;
 
@@ -154,8 +154,9 @@ impl<'a> Parser<'a> {
         self.raw_text(start)
     }
 
-    fn string_literal(&mut self, start: usize) -> Result<SintaxNode, Error> {
+    fn string_literal(&mut self) -> Result<SintaxNode, Error> {
         self.advance();
+        let start = self.position;
         let mut is_scapped = false;
 
         while !self.is_eof() {
@@ -167,7 +168,7 @@ impl<'a> Parser<'a> {
             if self.chars[self.position] == b'"' && !is_scapped {
                 self.advance();
                 return Ok(SintaxNode::Str {
-                    start: start + 1,
+                    start,
                     end: self.position - 1,
                 });
             }
@@ -177,12 +178,13 @@ impl<'a> Parser<'a> {
         Err(self.make_error("Unterminated string literal", start))
     }
 
-    fn identifier(&mut self) -> Result<(), Error> {
-        while !self.is_eof() && self.chars[self.position].is_ascii_alphabetic() {
+    fn identifier(&mut self) -> Result<(usize, usize), Error> {
+        let start = self.position;
+        while !self.is_eof() && self.chars[self.position].is_ascii_alphanumeric() {
             self.advance();
         }
 
-        Ok(())
+        Ok((start, self.position))
     }
 
     fn raw_text(&mut self, start: usize) -> Result<SintaxNode, Error> {
@@ -202,11 +204,7 @@ impl<'a> Parser<'a> {
     fn parse_template_expression(&mut self) -> Result<SintaxNode, Error> {
         self.skip_whitespace();
         // expect ident
-        let start = self.position;
-        self.identifier()?;
-        self.advance();
-        let name_end = self.position;
-
+        let (start, name_end) = self.identifier()?;
         self.skip_whitespace();
 
         if !self.is_eof() && self.chars[self.position] == b'(' {
@@ -214,15 +212,12 @@ impl<'a> Parser<'a> {
             self.skip_whitespace();
 
             let args = self.parse_function_arguments()?;
+            self.skip_whitespace();
 
             if !self.advance_delimiter(")") {
                 return Err(self.make_error("Unterminated function arguments", start));
             }
             self.skip_whitespace();
-
-            // if !self.check_delimiter(&self.close_delim) {
-            //     return Err(self.make_error("Unterminated expression", start));
-            // }
 
             Ok(SintaxNode::Function {
                 name_start: start,
@@ -230,9 +225,6 @@ impl<'a> Parser<'a> {
                 args,
             })
         } else {
-            // if !self.check_delimiter(&self.close_delim) {
-            //     return Err(self.make_error("Unterminated expression", start));
-            // }
             Ok(SintaxNode::Variable {
                 start,
                 end: name_end,
@@ -252,7 +244,7 @@ impl<'a> Parser<'a> {
 
             match self.chars[self.position] {
                 b'"' => {
-                    args.push(self.string_literal(self.position)?);
+                    args.push(self.string_literal()?);
                 }
                 _ => {
                     args.push(self.parse_template_expression()?);
@@ -267,30 +259,14 @@ impl<'a> Parser<'a> {
         Ok(args)
     }
 
-    // fn expect_token(&mut self, expected: &str) -> Result<Token, Error> {
-    //     if self.current >= self.tokens.len() {
-    //         return Err(self.make_error(
-    //             &format!("Expected {:?}, but found end of input", expected),
-    //             self.tokens[self.current - 1].end,
-    //         ));
-    //     }
-
-    //     let token = self.tokens[self.current];
-    //     if token.kind != expected {
-    //         return Err(self.make_error(
-    //             &format!("Expected {:?}, but found {:?}", expected, token.kind),
-    //             token.start,
-    //         ));
-    //     }
-
-    //     self.advance();
-    //     Ok(token)
-    // }
-
     fn make_error(&self, description: &str, at: usize) -> Error {
+        let mut len = self.start_line + self.column;
+        if len + 1 <= self.chars.len() {
+            len += 1;
+        }
         Error {
             description: description.to_string(),
-            context: self.input[self.start_line..(self.start_line + self.column)]
+            context: self.input[self.start_line..len]
                 .to_string()
                 .replace('\n', "\\n"),
             at,

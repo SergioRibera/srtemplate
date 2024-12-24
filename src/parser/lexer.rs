@@ -32,17 +32,6 @@ pub enum SintaxNode {
     Dict(Vec<((usize, usize), SintaxNode)>),
 }
 
-impl SintaxNode {
-    pub fn slice<'a>(&self, input: &'a str) -> &'a str {
-        match self {
-            Self::Variable { start, end }
-            | Self::Str { start, end }
-            | Self::RawText { start, end } => &input[*start..*end],
-            _ => "",
-        }
-    }
-}
-
 impl<'a> From<(&'a str, SintaxNode)> for TemplateNode<'a> {
     fn from((input, value): (&'a str, SintaxNode)) -> Self {
         match value {
