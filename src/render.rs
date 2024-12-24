@@ -30,7 +30,10 @@ pub fn render_nodes(
 
     for node in nodes {
         match node {
-            TemplateNode::RawText(text) | TemplateNode::String(text) => res.push_str(&text),
+            TemplateNode::RawText(text)
+            | TemplateNode::String(text)
+            | TemplateNode::Float(text)
+            | TemplateNode::Number(text) => res.push_str(&text),
             TemplateNode::Variable(variable) => {
                 let variable = vars
                     .get(variable)

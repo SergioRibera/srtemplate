@@ -19,6 +19,10 @@ pub enum TemplateNode<'a> {
     Function(&'a str, Vec<TemplateNode<'a>>),
     /// Plain text, pass as variable
     String(&'a str),
+    /// Number, pass as variable
+    Number(&'a str),
+    /// Decimal, pass as variable
+    Float(&'a str),
     /// Plain text, this will be ignored in the rendering
     RawText(&'a str),
 }
@@ -187,6 +191,39 @@ impl<'a> Parser<'a> {
         Ok((start, self.position))
     }
 
+    fn number_literal(&mut self) -> Result<SintaxNode, Error> {
+        let mut is_float = false;
+        let start = self.position;
+
+        while !self.is_eof() && self.chars[self.position].is_ascii_digit()
+            || self.chars[self.position] == b'.'
+        {
+            if self.chars[self.position] == b'.' && is_float {
+                return Err(self.make_error("The float just need one '.'", self.position));
+            }
+            if self.chars[self.position] == b'.' {
+                is_float = true;
+            }
+            self.advance();
+        }
+
+        if self.chars[self.position].is_ascii_alphabetic() {
+            return Err(self.make_error("Number literal not support letters", self.position));
+        }
+
+        if is_float {
+            return Ok(SintaxNode::Float {
+                start,
+                end: self.position,
+            });
+        }
+
+        Ok(SintaxNode::Number {
+            start,
+            end: self.position,
+        })
+    }
+
     fn raw_text(&mut self, start: usize) -> Result<SintaxNode, Error> {
         while !self.is_eof() {
             if self.check_delimiter(self.open_delim) {
@@ -246,6 +283,7 @@ impl<'a> Parser<'a> {
                 b'"' => {
                     args.push(self.string_literal()?);
                 }
+                n if n.is_ascii_digit() => args.push(self.number_literal()?),
                 _ => {
                     args.push(self.parse_template_expression()?);
                 }

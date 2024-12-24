@@ -46,8 +46,8 @@ impl<'a> From<(&'a str, SintaxNode)> for TemplateNode<'a> {
                 args.into_iter().map(|node| (input, node).into()).collect(),
             ),
             SintaxNode::Str { start, end } => Self::String(&input[start..end]),
-            SintaxNode::Number { start, end } => unreachable!(),
-            SintaxNode::Float { start, end } => unreachable!(),
+            SintaxNode::Number { start, end } => Self::Number(&input[start..end]),
+            SintaxNode::Float { start, end } => Self::Float(&input[start..end]),
             SintaxNode::Array(_) => unreachable!(),
             SintaxNode::Dict(_) => unreachable!(),
         }

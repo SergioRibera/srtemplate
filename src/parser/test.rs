@@ -140,6 +140,41 @@ fn inner_function_raw_text() {
 }
 
 #[test]
+fn numbers() {
+    let s = r#"Hello {{ test(14, 0.25, 00000, 00000.0) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert_eq!(
+        res,
+        Ok(vec![
+            TemplateNode::RawText("Hello "),
+            TemplateNode::Function(
+                "test",
+                vec![
+                    TemplateNode::Number("14"),
+                    TemplateNode::Float("0.25"),
+                    TemplateNode::Number("00000"),
+                    TemplateNode::Float("00000.0"),
+                ]
+            ),
+        ])
+    );
+}
+
+#[test]
+fn invalid_numbers() {
+    let s = r#"Hello {{ test(14.0.8) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert!(res.is_err());
+
+    let s = r#"Hello {{ test(14test) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert!(res.is_err());
+}
+
+#[test]
 fn recursive_function_syntax() {
     let s = r#"Hello {{ toLowerCase(trim(split(variable1, "|"))) }}"#;
     let res = parser(s, "{{", "}}");
