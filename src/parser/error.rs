@@ -28,7 +28,6 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 pub fn make_error(
-    input: &str,
     chars: &[u8],
     line: usize,
     column: usize,
@@ -37,12 +36,12 @@ pub fn make_error(
     at: usize,
 ) -> SrTemplateError {
     let mut len = start_line + column;
-    if len + 1 <= chars.len() {
+    if len + 1 < chars.len() {
         len += 1;
     }
     SrTemplateError::BadSyntax(Error {
         description: description.to_string(),
-        context: input[start_line..len].to_string().replace('\n', "\\n"),
+        context: String::from_utf8_lossy(&chars[start_line..len]).replace('\n', "\\n"),
         at,
         line,
         column,

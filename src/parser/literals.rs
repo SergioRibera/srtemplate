@@ -28,7 +28,6 @@ pub fn string_literal<'a>(
     }
 
     Err(make_error(
-        input,
         chars,
         *line,
         *column,
@@ -54,7 +53,6 @@ pub fn number_literal<'a>(
     {
         if chars[*position] == b'.' && is_float {
             return Err(make_error(
-                input,
                 chars,
                 *line,
                 *column,
@@ -72,7 +70,6 @@ pub fn number_literal<'a>(
     if let Some(&token) = chars.get(*position) {
         if !(token.is_ascii_digit() || token == b'.' || token == b',' || token == b')') {
             return Err(make_error(
-                input,
                 chars,
                 *line,
                 *column,

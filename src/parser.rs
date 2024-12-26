@@ -66,7 +66,6 @@ pub fn parser<'a>(
             // check end of sentence
             if !advance_delimiter(chars, close, &mut column, &mut position) {
                 return Err(make_error(
-                    input,
                     chars,
                     line,
                     column,
@@ -117,7 +116,6 @@ pub(self) fn parse_template_expression<'a>(
 
         if !advance_delimiter(chars, ")", column, position) {
             return Err(make_error(
-                input,
                 chars,
                 *line,
                 *column,
