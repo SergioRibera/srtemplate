@@ -17,6 +17,9 @@ exclude = ["examples/real_world/"]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
+[profile.bench]
+lto = true
+
 [profile.dev]
 opt-level = 1
 incremental = true
