@@ -1,6 +1,6 @@
-use crate::SrTemplateError;
+use crate::Error;
 
-use super::{advance, is_eof, make_error, TemplateNode};
+use super::{advance, is_eof, make, TemplateNode};
 
 pub fn string_literal<'a>(
     input: &'a str,
@@ -9,7 +9,7 @@ pub fn string_literal<'a>(
     line: &mut usize,
     column: &mut usize,
     start_line: &mut usize,
-) -> Result<TemplateNode<'a>, SrTemplateError> {
+) -> Result<TemplateNode<'a>, Error> {
     advance(chars, position, line, column, start_line);
     let start = *position;
     let mut is_scapped = false;
@@ -27,7 +27,7 @@ pub fn string_literal<'a>(
         advance(chars, position, line, column, start_line);
     }
 
-    Err(make_error(
+    Err(make(
         chars,
         *line,
         *column,
@@ -44,7 +44,7 @@ pub fn number_literal<'a>(
     line: &mut usize,
     column: &mut usize,
     start_line: &mut usize,
-) -> Result<TemplateNode<'a>, SrTemplateError> {
+) -> Result<TemplateNode<'a>, Error> {
     let mut is_float = false;
     let start = *position;
 
@@ -52,7 +52,7 @@ pub fn number_literal<'a>(
         && (chars[*position].is_ascii_digit() || chars[*position] == b'.')
     {
         if chars[*position] == b'.' && is_float {
-            return Err(make_error(
+            return Err(make(
                 chars,
                 *line,
                 *column,
@@ -69,7 +69,7 @@ pub fn number_literal<'a>(
 
     if let Some(&token) = chars.get(*position) {
         if !(token.is_ascii_digit() || token == b'.' || token == b',' || token == b')') {
-            return Err(make_error(
+            return Err(make(
                 chars,
                 *line,
                 *column,
@@ -91,7 +91,7 @@ pub fn number_literal<'a>(
 mod tests {
     use super::*;
 
-    fn setup<'a>(input: &'a str) -> (&'a str, Vec<u8>, usize, usize, usize, usize) {
+    fn setup(input: &str) -> (&str, Vec<u8>, usize, usize, usize, usize) {
         let chars = input.as_bytes();
         println!("Input: {input}");
         (input, chars.to_vec(), 0, 1, 0, 0)
@@ -158,7 +158,7 @@ mod tests {
 
         assert!(result.is_err());
 
-        if let SrTemplateError::BadSyntax(error) = result.unwrap_err() {
+        if let Error::BadSyntax(error) = result.unwrap_err() {
             assert_eq!(&error.description, "Unterminated string literal");
         }
         assert_eq!(position, 12);
@@ -221,7 +221,7 @@ mod tests {
         );
 
         assert!(result.is_err());
-        if let SrTemplateError::BadSyntax(error) = result.unwrap_err() {
+        if let Error::BadSyntax(error) = result.unwrap_err() {
             assert_eq!(&error.description, "The float just need one '.'");
         }
         assert_eq!(position, 6);
@@ -240,7 +240,7 @@ mod tests {
         );
 
         assert!(result.is_err());
-        if let SrTemplateError::BadSyntax(error) = result.unwrap_err() {
+        if let Error::BadSyntax(error) = result.unwrap_err() {
             assert_eq!(&error.description, "Invalid character in Number literal");
         }
         assert_eq!(position, 3);

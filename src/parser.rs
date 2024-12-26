@@ -8,11 +8,9 @@ mod literals;
 #[cfg(test)]
 mod test;
 
-pub use error::{make_error, Error};
+pub use error::{make, Error};
 
-use crate::SrTemplateError;
-use functions::*;
-use literals::*;
+use functions::parse_function_arguments;
 
 /// Variants of the types of nodes that exist in the syntax
 #[derive(Debug, PartialEq, Eq)]
@@ -42,7 +40,7 @@ pub fn parser<'a>(
     input: &'a str,
     start: &'a str,
     close: &'a str,
-) -> Result<Vec<TemplateNode<'a>>, SrTemplateError> {
+) -> Result<Vec<TemplateNode<'a>>, crate::Error> {
     #[cfg(feature = "debug")]
     trace!("Start Parser: {input} with delimiters: {start} - {close}");
     let mut res = Vec::with_capacity(20);
@@ -65,7 +63,7 @@ pub fn parser<'a>(
 
             // check end of sentence
             if !advance_delimiter(chars, close, &mut column, &mut position) {
-                return Err(make_error(
+                return Err(make(
                     chars,
                     line,
                     column,
@@ -83,7 +81,6 @@ pub fn parser<'a>(
             input,
             chars,
             start,
-            position,
             &mut position,
             &mut line,
             &mut column,
@@ -94,14 +91,14 @@ pub fn parser<'a>(
     Ok(res)
 }
 
-pub(self) fn parse_template_expression<'a>(
+fn parse_template_expression<'a>(
     input: &'a str,
     chars: &[u8],
     position: &mut usize,
     line: &mut usize,
     column: &mut usize,
     start_line: &mut usize,
-) -> Result<TemplateNode<'a>, SrTemplateError> {
+) -> Result<TemplateNode<'a>, crate::Error> {
     skip_whitespace(chars, position, line, column, start_line);
     // expect ident
     let (start, name_end) = identifier(chars, position, line, column, start_line);
@@ -115,7 +112,7 @@ pub(self) fn parse_template_expression<'a>(
         skip_whitespace(chars, position, line, column, start_line);
 
         if !advance_delimiter(chars, ")", column, position) {
-            return Err(make_error(
+            return Err(make(
                 chars,
                 *line,
                 *column,
@@ -132,7 +129,7 @@ pub(self) fn parse_template_expression<'a>(
     }
 }
 
-pub(self) fn identifier(
+fn identifier(
     chars: &[u8],
     position: &mut usize,
     line: &mut usize,
@@ -149,16 +146,16 @@ pub(self) fn identifier(
     (start, *position)
 }
 
-pub(self) fn raw_text<'a>(
+fn raw_text<'a>(
     input: &'a str,
     chars: &[u8],
     open_delim: &str,
-    start: usize,
     position: &mut usize,
     line: &mut usize,
     column: &mut usize,
     start_line: &mut usize,
 ) -> TemplateNode<'a> {
+    let start = *position;
     while !is_eof(chars, *position) {
         if check_delimiter(chars, open_delim, *position) {
             break;
@@ -169,7 +166,7 @@ pub(self) fn raw_text<'a>(
     TemplateNode::RawText(&input[start..*position])
 }
 
-pub(self) fn advance(
+fn advance(
     chars: &[u8],
     position: &mut usize,
     line: &mut usize,
@@ -188,17 +185,12 @@ pub(self) fn advance(
     }
 }
 
-pub(self) fn check_delimiter(chars: &[u8], delim: &str, position: usize) -> bool {
+fn check_delimiter(chars: &[u8], delim: &str, position: usize) -> bool {
     position + delim.len() <= chars.len()
         && &chars[position..position + delim.len()] == delim.as_bytes()
 }
 
-pub(self) fn advance_delimiter(
-    chars: &[u8],
-    delim: &str,
-    column: &mut usize,
-    position: &mut usize,
-) -> bool {
+fn advance_delimiter(chars: &[u8], delim: &str, column: &mut usize, position: &mut usize) -> bool {
     if check_delimiter(chars, delim, *position) {
         if *position + delim.len() <= chars.len() {
             *position += delim.len();
@@ -210,11 +202,11 @@ pub(self) fn advance_delimiter(
     false
 }
 
-pub(self) fn is_eof(chars: &[u8], position: usize) -> bool {
+fn is_eof(chars: &[u8], position: usize) -> bool {
     position >= chars.len()
 }
 
-pub(self) fn skip_whitespace(
+fn skip_whitespace(
     chars: &[u8],
     position: &mut usize,
     line: &mut usize,

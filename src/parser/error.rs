@@ -1,7 +1,5 @@
 use std::fmt;
 
-use crate::SrTemplateError;
-
 #[derive(Debug, PartialEq)]
 pub struct Error {
     pub description: String,
@@ -27,19 +25,19 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-pub fn make_error(
+pub fn make(
     chars: &[u8],
     line: usize,
     column: usize,
     start_line: usize,
     description: &str,
     at: usize,
-) -> SrTemplateError {
+) -> crate::Error {
     let mut len = start_line + column;
     if len + 1 < chars.len() {
         len += 1;
     }
-    SrTemplateError::BadSyntax(Error {
+    crate::Error::BadSyntax(Error {
         description: description.to_string(),
         context: String::from_utf8_lossy(&chars[start_line..len]).replace('\n', "\\n"),
         at,

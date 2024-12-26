@@ -1,10 +1,10 @@
 use thiserror::Error;
 
-pub type FuncResult = Result<String, FunctionError>;
+pub type FuncResult = Result<String, Error>;
 
 /// An enumeration representing various errors that can occur while processing functions.
 #[derive(Debug, Error, PartialEq)]
-pub enum FunctionError {
+pub enum Error {
     #[error("Invalid Function Arguments {0}")]
     InvalidArgument(String),
 

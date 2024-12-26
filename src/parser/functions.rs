@@ -1,6 +1,7 @@
-use crate::SrTemplateError;
+use crate::Error;
 
-use super::*;
+use super::literals::{number_literal, string_literal};
+use super::{advance_delimiter, is_eof, parse_template_expression, skip_whitespace, TemplateNode};
 
 pub fn parse_function_arguments<'a>(
     input: &'a str,
@@ -9,7 +10,7 @@ pub fn parse_function_arguments<'a>(
     line: &mut usize,
     column: &mut usize,
     start_line: &mut usize,
-) -> Result<Vec<TemplateNode<'a>>, SrTemplateError> {
+) -> Result<Vec<TemplateNode<'a>>, Error> {
     let mut args = Vec::new();
 
     while !is_eof(chars, *position) && chars[*position] != b')' {

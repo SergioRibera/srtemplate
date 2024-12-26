@@ -2,9 +2,9 @@ use std::borrow::Cow;
 
 use dashmap::DashMap;
 
-use crate::error::SrTemplateError;
+use crate::error::Error;
 use crate::parser::TemplateNode;
-use crate::template::TemplateFunction;
+use crate::template::Function;
 #[cfg(feature = "debug")]
 use log::debug;
 
@@ -21,28 +21,28 @@ use log::debug;
 /// # Returns
 ///
 /// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
-pub fn render_nodes(
+pub fn nodes(
     res: &mut String,
-    node: TemplateNode,
+    tnode: TemplateNode,
     vars: &DashMap<Cow<'_, str>, String>,
-    funcs: &DashMap<Cow<'_, str>, Box<TemplateFunction>>,
-) -> Result<(), SrTemplateError> {
-    match node {
+    funcs: &DashMap<Cow<'_, str>, Box<Function>>,
+) -> Result<(), Error> {
+    match tnode {
         TemplateNode::RawText(text)
         | TemplateNode::String(text)
         | TemplateNode::Float(text)
-        | TemplateNode::Number(text) => res.push_str(&text),
+        | TemplateNode::Number(text) => res.push_str(text),
         TemplateNode::Variable(variable) => {
             let variable = vars
                 .get(variable)
-                .ok_or(SrTemplateError::VariableNotFound(variable.to_owned()))?;
+                .ok_or(Error::VariableNotFound(variable.to_owned()))?;
 
             res.push_str(&variable);
         }
         TemplateNode::Function(function, arguments) => {
-            let evaluated_arguments: Result<Vec<String>, SrTemplateError> = arguments
+            let evaluated_arguments: Result<Vec<String>, Error> = arguments
                 .into_iter()
-                .map(|arg| render_node(arg, vars, funcs))
+                .map(|arg| node(arg, vars, funcs))
                 .collect();
 
             let evaluated_arguments = evaluated_arguments?;
@@ -51,8 +51,8 @@ pub fn render_nodes(
 
             let result_of_function = funcs
                 .get(function)
-                .ok_or(SrTemplateError::FunctionNotImplemented(function.to_owned()))?(
-                &evaluated_arguments,
+                .ok_or(Error::FunctionNotImplemented(function.to_owned()))?(
+                &evaluated_arguments
             )?;
 
             #[cfg(feature = "debug")]
@@ -65,12 +65,12 @@ pub fn render_nodes(
     Ok(())
 }
 
-pub fn render_node(
-    node: TemplateNode,
+pub fn node(
+    tnode: TemplateNode,
     vars: &DashMap<Cow<'_, str>, String>,
-    funcs: &DashMap<Cow<'_, str>, Box<TemplateFunction>>,
-) -> Result<String, SrTemplateError> {
-    match node {
+    funcs: &DashMap<Cow<'_, str>, Box<Function>>,
+) -> Result<String, Error> {
+    match tnode {
         TemplateNode::RawText(text)
         | TemplateNode::String(text)
         | TemplateNode::Float(text)
@@ -78,14 +78,14 @@ pub fn render_node(
         TemplateNode::Variable(variable) => {
             let variable = vars
                 .get(variable)
-                .ok_or(SrTemplateError::VariableNotFound(variable.to_owned()))?;
+                .ok_or(Error::VariableNotFound(variable.to_owned()))?;
 
             Ok(variable.to_owned())
         }
         TemplateNode::Function(function, arguments) => {
-            let evaluated_arguments: Result<Vec<String>, SrTemplateError> = arguments
+            let evaluated_arguments: Result<Vec<String>, Error> = arguments
                 .into_iter()
-                .map(|arg| render_node(arg, vars, funcs))
+                .map(|arg| node(arg, vars, funcs))
                 .collect();
 
             let evaluated_arguments = evaluated_arguments?;
@@ -94,8 +94,8 @@ pub fn render_node(
 
             let result_of_function = funcs
                 .get(function)
-                .ok_or(SrTemplateError::FunctionNotImplemented(function.to_owned()))?(
-                &evaluated_arguments,
+                .ok_or(Error::FunctionNotImplemented(function.to_owned()))?(
+                &evaluated_arguments
             )?;
 
             #[cfg(feature = "debug")]
@@ -119,11 +119,11 @@ mod tests {
     fn basic_render() {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
         let template = "Hello {{ var }}";
-        let nodes = parser(template, "{{", "}}").unwrap();
+        let tnodes = parser(template, "{{", "}}").unwrap();
         let mut res = String::new();
 
-        for node in nodes.into_iter() {
-            let out = render_nodes(&mut res, node, &vars, &DashMap::new());
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &DashMap::new());
             assert!(out.is_ok());
         }
 
@@ -135,14 +135,14 @@ mod tests {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
         let funcs = DashMap::from_iter([(
             Cow::Borrowed("toLowerCase"),
-            Box::new(builtin::text::to_lower as TemplateFunction),
+            Box::new(builtin::text::to_lower as Function),
         )]);
         let template = "Hello {{ toLowerCase(var) }}";
-        let nodes = parser(template, "{{", "}}").unwrap();
+        let tnodes = parser(template, "{{", "}}").unwrap();
         let mut res = String::new();
 
-        for node in nodes.into_iter() {
-            let out = render_nodes(&mut res, node, &vars, &funcs);
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &funcs);
             assert!(out.is_ok());
         }
 
@@ -155,19 +155,19 @@ mod tests {
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
-                Box::new(builtin::text::to_lower as TemplateFunction),
+                Box::new(builtin::text::to_lower as Function),
             ),
             (
                 Cow::Borrowed("trim"),
-                Box::new(builtin::text::trim as TemplateFunction),
+                Box::new(builtin::text::trim as Function),
             ),
         ]);
         let template = "Hello {{ toLowerCase(trim(var)) }}";
-        let nodes = parser(template, "{{", "}}").unwrap();
+        let tnodes = parser(template, "{{", "}}").unwrap();
         let mut res = String::new();
 
-        for node in nodes.into_iter() {
-            let out = render_nodes(&mut res, node, &vars, &funcs);
+        for node in tnodes.into_iter() {
+            let out = nodes(&mut res, node, &vars, &funcs);
             assert!(out.is_ok());
         }
 
@@ -180,20 +180,20 @@ mod tests {
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
-                Box::new(builtin::text::to_lower as TemplateFunction),
+                Box::new(builtin::text::to_lower as Function),
             ),
             (
                 Cow::Borrowed("trim"),
-                Box::new(builtin::text::trim as TemplateFunction),
+                Box::new(builtin::text::trim as Function),
             ),
         ]);
         let template = r#"Hello
 {{ toLowerCase(trim(var, "  !   ")) }}"#;
-        let nodes = parser(template, "{{", "}}").unwrap();
+        let tnodes = parser(template, "{{", "}}").unwrap();
         let mut res = String::new();
 
-        for node in nodes.into_iter() {
-            let out = render_nodes(&mut res, node, &vars, &funcs);
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &funcs);
             assert!(out.is_ok());
         }
 
