@@ -15,12 +15,12 @@ pub fn string_literal<'a>(
     let mut is_scapped = false;
 
     while !is_eof(chars, *position) {
-        if chars[*position] == b'\\' {
-            is_scapped = !is_scapped;
-        } else if is_scapped {
+        let token = chars[*position];
+        if is_scapped {
             is_scapped = false;
-        }
-        if chars[*position] == b'"' && !is_scapped {
+        } else if token == b'\\' {
+            is_scapped = true;
+        } else if token == b'"' {
             advance(chars, position, line, column, start_line);
             return Ok(TemplateNode::String(&input[start..*position - 1]));
         }
@@ -69,16 +69,18 @@ pub fn number_literal<'a>(
         advance(chars, position, line, column, start_line);
     }
 
-    if !(chars[*position - 1].is_ascii_digit() || chars[*position - 1] == b'.') {
-        return Err(make_error(
-            input,
-            chars,
-            *line,
-            *column,
-            *start_line,
-            "Invalid character in Number literal",
-            *position,
-        ));
+    if let Some(&token) = chars.get(*position) {
+        if !(token.is_ascii_digit() || token == b'.' || token == b',' || token == b')') {
+            return Err(make_error(
+                input,
+                chars,
+                *line,
+                *column,
+                *start_line,
+                "Invalid character in Number literal",
+                *position,
+            ));
+        }
     }
 
     if is_float {
