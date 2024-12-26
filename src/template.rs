@@ -156,12 +156,20 @@ impl<'a> SrTemplate<'a> {
     /// }
     /// ```
     pub fn render<T: AsRef<str>>(&self, text: T) -> Result<String, SrTemplateError> {
-        let text = text.as_ref();
-        let start = self.delimiter_start.as_ref();
-        let close = self.delimiter_close.as_ref();
-        let nodes =
-            parser(text, start, close).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
-        let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
+        let input = text.as_ref();
+        let open_delim = self.delimiter_start.as_ref();
+        let close_delim = self.delimiter_close.as_ref();
+        let mut res = String::with_capacity(input.len());
+        let nodes = parser(input, open_delim, close_delim)?;
+
+        for var in nodes.into_iter() {
+            render_nodes(
+                &mut res,
+                var,
+                self.variables.as_ref(),
+                self.functions.as_ref(),
+            )?;
+        }
         Ok(res)
     }
 }

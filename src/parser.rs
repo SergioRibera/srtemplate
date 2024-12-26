@@ -2,13 +2,17 @@
 use log::trace;
 
 mod error;
-mod lexer;
+mod functions;
+mod literals;
 
 #[cfg(test)]
 mod test;
 
-pub use error::Error;
-pub use lexer::SintaxNode;
+pub use error::{make_error, Error};
+
+use crate::SrTemplateError;
+use functions::*;
+use literals::*;
 
 /// Variants of the types of nodes that exist in the syntax
 #[derive(Debug, PartialEq, Eq)]
@@ -38,281 +42,188 @@ pub fn parser<'a>(
     input: &'a str,
     start: &'a str,
     close: &'a str,
-) -> Result<Vec<TemplateNode<'a>>, Error> {
+) -> Result<Vec<TemplateNode<'a>>, SrTemplateError> {
     #[cfg(feature = "debug")]
     trace!("Start Parser: {input} with delimiters: {start} - {close}");
-    let mut parser = Parser::new(input, start, close);
-    parser
-        .parse()
-        .map(|nodes| nodes.into_iter().map(|node| (input, node).into()).collect())
-}
+    let mut res = Vec::with_capacity(20);
+    let chars = input.as_bytes();
+    let mut position = 0usize;
+    let mut column = 0usize;
+    let mut line = 0usize;
+    let mut start_line = 0usize;
 
-pub struct Parser<'a> {
-    input: &'a str,
-    chars: &'a [u8],
-    position: usize,
-    start_line: usize,
-    line: usize,
-    column: usize,
-    open_delim: &'a str,
-    close_delim: &'a str,
-}
-
-impl<'a> Parser<'a> {
-    pub fn new(input: &'a str, open_delim: &'a str, close_delim: &'a str) -> Self {
-        Self {
-            input,
-            chars: input.as_bytes(),
-            position: 0,
-            start_line: 0,
-            line: 0,
-            column: 0,
-            open_delim,
-            close_delim,
-        }
-    }
-
-    pub fn parse(&mut self) -> Result<Vec<SintaxNode>, Error> {
-        let mut buffer = Vec::new();
-
-        while !self.is_eof() {
-            buffer.push(self.next_token()?);
-            // if self.advance_delimiter(self.open_delim) {
-            //     let var = self.parse_template_expression()?;
-
-            //     // check end of sentence
-            //     if !self.advance_delimiter(self.close_delim) {
-            //         return Err(self.make_error(
-            //             &format!("Expected {:?}, but found end of input", self.close_delim),
-            //             self.position,
-            //         ));
-            //     }
-
-            //     buffer.push(var);
-            //     continue;
-            // }
-
-            // buffer.push(self.raw_text(self.position)?);
-        }
-
-        Ok(buffer)
-    }
-
-    fn advance(&mut self) {
-        if self.position < self.chars.len() {
-            if self.chars[self.position] == b'\n' {
-                self.line += 1;
-                self.column = 0;
-                self.start_line = self.position;
-            } else {
-                self.column += 1;
-            }
-            self.position += 1;
-        }
-    }
-
-    fn check_delimiter(&self, delim: &str) -> bool {
-        self.position + delim.len() <= self.chars.len()
-            && &self.chars[self.position..self.position + delim.len()] == delim.as_bytes()
-    }
-
-    fn advance_delimiter(&mut self, delim: &str) -> bool {
-        if self.check_delimiter(delim) {
-            if self.position + delim.len() <= self.chars.len() {
-                self.position += delim.len();
-                self.column += delim.len();
-            }
-            return true;
-        }
-
-        false
-    }
-
-    fn is_eof(&self) -> bool {
-        self.position >= self.chars.len()
-    }
-
-    fn skip_whitespace(&mut self) {
-        while !self.is_eof() && self.chars[self.position].is_ascii_whitespace() {
-            self.advance();
-        }
-    }
-
-    fn next_token(&mut self) -> Result<SintaxNode, Error> {
-        let start = self.position;
-
-        if self.advance_delimiter(self.open_delim) {
-            let var = self.parse_template_expression()?;
+    while !is_eof(chars, position) {
+        if advance_delimiter(chars, start, &mut column, &mut position) {
+            let var = parse_template_expression(
+                input,
+                chars,
+                &mut position,
+                &mut line,
+                &mut column,
+                &mut start_line,
+            )?;
 
             // check end of sentence
-            if !self.advance_delimiter(self.close_delim) {
-                return Err(self.make_error(
-                    &format!("Expected {:?}, but found end of input", self.close_delim),
-                    self.position,
+            if !advance_delimiter(chars, close, &mut column, &mut position) {
+                return Err(make_error(
+                    input,
+                    chars,
+                    line,
+                    column,
+                    start_line,
+                    &format!("Expected {close:?}, but found end of input"),
+                    position,
                 ));
             }
 
-            return Ok(var);
+            res.push(var);
+            continue;
         }
 
-        self.raw_text(start)
+        res.push(raw_text(
+            input,
+            chars,
+            start,
+            position,
+            &mut position,
+            &mut line,
+            &mut column,
+            &mut start_line,
+        ));
     }
 
-    fn string_literal(&mut self) -> Result<SintaxNode, Error> {
-        self.advance();
-        let start = self.position;
-        let mut is_scapped = false;
+    Ok(res)
+}
 
-        while !self.is_eof() {
-            if self.chars[self.position] == b'\\' {
-                is_scapped = !is_scapped;
-            } else if is_scapped {
-                is_scapped = false;
-            }
-            if self.chars[self.position] == b'"' && !is_scapped {
-                self.advance();
-                return Ok(SintaxNode::Str {
-                    start,
-                    end: self.position - 1,
-                });
-            }
-            self.advance();
-        }
+pub(self) fn parse_template_expression<'a>(
+    input: &'a str,
+    chars: &[u8],
+    position: &mut usize,
+    line: &mut usize,
+    column: &mut usize,
+    start_line: &mut usize,
+) -> Result<TemplateNode<'a>, SrTemplateError> {
+    skip_whitespace(chars, position, line, column, start_line);
+    // expect ident
+    let (start, name_end) = identifier(chars, position, line, column, start_line);
+    skip_whitespace(chars, position, line, column, start_line);
 
-        Err(self.make_error("Unterminated string literal", start))
-    }
+    if !is_eof(chars, *position) && chars[*position] == b'(' {
+        advance(chars, position, line, column, start_line);
+        skip_whitespace(chars, position, line, column, start_line);
 
-    fn identifier(&mut self) -> Result<(usize, usize), Error> {
-        let start = self.position;
-        while !self.is_eof()
-            && (self.chars[self.position].is_ascii_alphanumeric()
-                || self.chars[self.position] == b'_')
-        {
-            self.advance();
-        }
+        let args = parse_function_arguments(input, chars, position, line, column, start_line)?;
+        skip_whitespace(chars, position, line, column, start_line);
 
-        Ok((start, self.position))
-    }
-
-    fn number_literal(&mut self) -> Result<SintaxNode, Error> {
-        let mut is_float = false;
-        let start = self.position;
-
-        while !self.is_eof()
-            && (self.chars[self.position].is_ascii_digit() || self.chars[self.position] == b'.')
-        {
-            if self.chars[self.position] == b'.' && is_float {
-                return Err(self.make_error("The float just need one '.'", self.position));
-            }
-            if self.chars[self.position] == b'.' {
-                is_float = true;
-            }
-            self.advance();
-        }
-
-        if self.chars[self.position].is_ascii_alphabetic() {
-            return Err(self.make_error("Number literal not support letters", self.position));
-        }
-
-        if is_float {
-            return Ok(SintaxNode::Float {
+        if !advance_delimiter(chars, ")", column, position) {
+            return Err(make_error(
+                input,
+                chars,
+                *line,
+                *column,
+                *start_line,
+                "Unterminated function arguments",
                 start,
-                end: self.position,
-            });
+            ));
         }
+        skip_whitespace(chars, position, line, column, start_line);
 
-        Ok(SintaxNode::Number {
-            start,
-            end: self.position,
-        })
+        Ok(TemplateNode::Function(&input[start..name_end], args))
+    } else {
+        Ok(TemplateNode::Variable(&input[start..name_end]))
+    }
+}
+
+pub(self) fn identifier(
+    chars: &[u8],
+    position: &mut usize,
+    line: &mut usize,
+    column: &mut usize,
+    start_line: &mut usize,
+) -> (usize, usize) {
+    let start = *position;
+    while !is_eof(chars, *position)
+        && (chars[*position].is_ascii_alphanumeric() || chars[*position] == b'_')
+    {
+        advance(chars, position, line, column, start_line);
     }
 
-    fn raw_text(&mut self, start: usize) -> Result<SintaxNode, Error> {
-        while !self.is_eof() {
-            if self.check_delimiter(self.open_delim) {
-                break;
-            }
-            self.advance();
-        }
+    (start, *position)
+}
 
-        Ok(SintaxNode::RawText {
-            start,
-            end: self.position,
-        })
+pub(self) fn raw_text<'a>(
+    input: &'a str,
+    chars: &[u8],
+    open_delim: &str,
+    start: usize,
+    position: &mut usize,
+    line: &mut usize,
+    column: &mut usize,
+    start_line: &mut usize,
+) -> TemplateNode<'a> {
+    while !is_eof(chars, *position) {
+        if check_delimiter(chars, open_delim, *position) {
+            break;
+        }
+        advance(chars, position, line, column, start_line);
     }
 
-    fn parse_template_expression(&mut self) -> Result<SintaxNode, Error> {
-        self.skip_whitespace();
-        // expect ident
-        let (start, name_end) = self.identifier()?;
-        self.skip_whitespace();
+    TemplateNode::RawText(&input[start..*position])
+}
 
-        if !self.is_eof() && self.chars[self.position] == b'(' {
-            self.advance();
-            self.skip_whitespace();
-
-            let args = self.parse_function_arguments()?;
-            self.skip_whitespace();
-
-            if !self.advance_delimiter(")") {
-                return Err(self.make_error("Unterminated function arguments", start));
-            }
-            self.skip_whitespace();
-
-            Ok(SintaxNode::Function {
-                name_start: start,
-                name_end,
-                args,
-            })
+pub(self) fn advance(
+    chars: &[u8],
+    position: &mut usize,
+    line: &mut usize,
+    column: &mut usize,
+    start_line: &mut usize,
+) {
+    if *position < chars.len() {
+        if chars[*position] == b'\n' {
+            *line += 1;
+            *column = 0;
+            *start_line = *position;
         } else {
-            Ok(SintaxNode::Variable {
-                start,
-                end: name_end,
-            })
+            *column += 1;
         }
+        *position += 1;
+    }
+}
+
+pub(self) fn check_delimiter(chars: &[u8], delim: &str, position: usize) -> bool {
+    position + delim.len() <= chars.len()
+        && &chars[position..position + delim.len()] == delim.as_bytes()
+}
+
+pub(self) fn advance_delimiter(
+    chars: &[u8],
+    delim: &str,
+    column: &mut usize,
+    position: &mut usize,
+) -> bool {
+    if check_delimiter(chars, delim, *position) {
+        if *position + delim.len() <= chars.len() {
+            *position += delim.len();
+            *column += delim.len();
+        }
+        return true;
     }
 
-    fn parse_function_arguments(&mut self) -> Result<Vec<SintaxNode>, Error> {
-        let mut args = Vec::new();
+    false
+}
 
-        while !self.is_eof() && self.chars[self.position] != b')' {
-            self.skip_whitespace();
+pub(self) fn is_eof(chars: &[u8], position: usize) -> bool {
+    position >= chars.len()
+}
 
-            if self.chars[self.position] == b')' {
-                break;
-            }
-
-            match self.chars[self.position] {
-                b'"' => {
-                    args.push(self.string_literal()?);
-                }
-                n if n.is_ascii_digit() => args.push(self.number_literal()?),
-                _ => {
-                    args.push(self.parse_template_expression()?);
-                }
-            }
-
-            self.skip_whitespace();
-            if !self.advance_delimiter(",") {
-                break;
-            }
-        }
-        Ok(args)
-    }
-
-    fn make_error(&self, description: &str, at: usize) -> Error {
-        let mut len = self.start_line + self.column;
-        if len + 1 <= self.chars.len() {
-            len += 1;
-        }
-        Error {
-            description: description.to_string(),
-            context: self.input[self.start_line..len]
-                .to_string()
-                .replace('\n', "\\n"),
-            at,
-            line: self.line,
-            column: self.column,
-        }
+pub(self) fn skip_whitespace(
+    chars: &[u8],
+    position: &mut usize,
+    line: &mut usize,
+    column: &mut usize,
+    start_line: &mut usize,
+) {
+    while !is_eof(chars, *position) && chars[*position].is_ascii_whitespace() {
+        advance(chars, position, line, column, start_line);
     }
 }

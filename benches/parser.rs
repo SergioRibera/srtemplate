@@ -31,12 +31,6 @@ fn bench_clone_instance(b: Bencher) {
     let ctx = SrTemplate::default();
     ctx.add_variable("variable", &"Variable");
 
-    b.bench(|| {
-        for _i in 0..100 {
-            let ctx = ctx.clone();
-            std::thread::spawn(move || {
-                ctx.render(input).unwrap();
-            });
-        }
-    })
+    b.with_inputs(|| ctx.clone())
+        .bench_values(|ctx| ctx.render(input).unwrap())
 }

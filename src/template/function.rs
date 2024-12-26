@@ -3,7 +3,7 @@ use thiserror::Error;
 pub type FuncResult = Result<String, FunctionError>;
 
 /// An enumeration representing various errors that can occur while processing functions.
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum FunctionError {
     #[error("Invalid Function Arguments {0}")]
     InvalidArgument(String),

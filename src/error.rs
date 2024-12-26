@@ -1,11 +1,11 @@
 use thiserror::Error;
 
 /// Collection of errors in the library
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum SrTemplateError {
     /// This error appears when the syntax of the template to be rendered is wrong.
-    #[error("Invalid syntaxis")]
-    BadSyntax(String),
+    #[error(transparent)]
+    BadSyntax(crate::parser::Error),
 
     /// This error appears when the variable to be rendered does not exist.
     #[error("Variable not found: {0}")]
