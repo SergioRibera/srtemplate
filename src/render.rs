@@ -106,90 +106,97 @@ pub fn render_node(
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::builtin;
-//     use crate::parser::parser;
-//
-//     use dashmap::DashMap;
-//
-//     use super::*;
-//
-//     #[test]
-//     fn basic_render() {
-//         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
-//         let template = "Hello {{ var }}";
-//         let nodes = parser(template, "{{", "}}").unwrap();
-//         let res = render_node(nodes, &vars, &DashMap::new());
-//
-//         assert!(res.is_ok());
-//
-//         let res = res.unwrap();
-//         assert_eq!(&res, "Hello World");
-//     }
-//
-//     #[test]
-//     fn basic_function_render() {
-//         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
-//         let funcs = DashMap::from_iter([(
-//             Cow::Borrowed("toLowerCase"),
-//             Box::new(builtin::text::to_lower as TemplateFunction),
-//         )]);
-//         let template = "Hello {{ toLowerCase(var) }}";
-//         let nodes = parser(template, "{{", "}}").unwrap();
-//         let res = render_nodes(nodes, &vars, &funcs);
-//
-//         assert!(res.is_ok());
-//
-//         let res = res.unwrap();
-//         assert_eq!(res, "Hello world".to_string());
-//     }
-//
-//     #[test]
-//     fn recursive_function_render() {
-//         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
-//         let funcs = DashMap::from_iter([
-//             (
-//                 Cow::Borrowed("toLowerCase"),
-//                 Box::new(builtin::text::to_lower as TemplateFunction),
-//             ),
-//             (
-//                 Cow::Borrowed("trim"),
-//                 Box::new(builtin::text::trim as TemplateFunction),
-//             ),
-//         ]);
-//         let template = "Hello {{ toLowerCase(trim(var)) }}";
-//         let nodes = parser(template, "{{", "}}").unwrap();
-//         let res = render_nodes(nodes, &vars, &funcs);
-//
-//         assert!(res.is_ok());
-//
-//         let res = res.unwrap();
-//         assert_eq!(res, "Hello world".to_string());
-//     }
-//
-//     #[test]
-//     fn raw_string_render() {
-//         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "    WoRlD".to_string())]);
-//         let funcs = DashMap::from_iter([
-//             (
-//                 Cow::Borrowed("toLowerCase"),
-//                 Box::new(builtin::text::to_lower as TemplateFunction),
-//             ),
-//             (
-//                 Cow::Borrowed("trim"),
-//                 Box::new(builtin::text::trim as TemplateFunction),
-//             ),
-//         ]);
-//         let template = r#"Hello
-// {{ toLowerCase(trim(var, "  !   ")) }}"#;
-//         let nodes = parser(template, "{{", "}}").unwrap();
-//         let res = render_nodes(nodes, &vars, &funcs);
-//
-//         println!("Err: {res:?}");
-//         assert!(res.is_ok());
-//
-//         let res = res.unwrap();
-//         assert_eq!(res, "Hello\nworld !".to_string());
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use crate::builtin;
+    use crate::parser::parser;
+
+    use dashmap::DashMap;
+
+    use super::*;
+
+    #[test]
+    fn basic_render() {
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
+        let template = "Hello {{ var }}";
+        let nodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
+
+        for node in nodes.into_iter() {
+            let out = render_nodes(&mut res, node, &vars, &DashMap::new());
+            assert!(out.is_ok());
+        }
+
+        assert_eq!(&res, "Hello World");
+    }
+
+    #[test]
+    fn basic_function_render() {
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
+        let funcs = DashMap::from_iter([(
+            Cow::Borrowed("toLowerCase"),
+            Box::new(builtin::text::to_lower as TemplateFunction),
+        )]);
+        let template = "Hello {{ toLowerCase(var) }}";
+        let nodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
+
+        for node in nodes.into_iter() {
+            let out = render_nodes(&mut res, node, &vars, &funcs);
+            assert!(out.is_ok());
+        }
+
+        assert_eq!(&res, "Hello world");
+    }
+
+    #[test]
+    fn recursive_function_render() {
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
+        let funcs = DashMap::from_iter([
+            (
+                Cow::Borrowed("toLowerCase"),
+                Box::new(builtin::text::to_lower as TemplateFunction),
+            ),
+            (
+                Cow::Borrowed("trim"),
+                Box::new(builtin::text::trim as TemplateFunction),
+            ),
+        ]);
+        let template = "Hello {{ toLowerCase(trim(var)) }}";
+        let nodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
+
+        for node in nodes.into_iter() {
+            let out = render_nodes(&mut res, node, &vars, &funcs);
+            assert!(out.is_ok());
+        }
+
+        assert_eq!(&res, "Hello world");
+    }
+
+    #[test]
+    fn raw_string_render() {
+        let vars = DashMap::from_iter([(Cow::Borrowed("var"), "    WoRlD".to_string())]);
+        let funcs = DashMap::from_iter([
+            (
+                Cow::Borrowed("toLowerCase"),
+                Box::new(builtin::text::to_lower as TemplateFunction),
+            ),
+            (
+                Cow::Borrowed("trim"),
+                Box::new(builtin::text::trim as TemplateFunction),
+            ),
+        ]);
+        let template = r#"Hello
+{{ toLowerCase(trim(var, "  !   ")) }}"#;
+        let nodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
+
+        for node in nodes.into_iter() {
+            let out = render_nodes(&mut res, node, &vars, &funcs);
+            assert!(out.is_ok());
+        }
+
+        assert_eq!(&res, "Hello\nworld !");
+    }
+}

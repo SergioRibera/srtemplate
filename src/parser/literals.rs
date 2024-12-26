@@ -69,7 +69,7 @@ pub fn number_literal<'a>(
         advance(chars, position, line, column, start_line);
     }
 
-    if !(chars[*position].is_ascii_digit() || chars[*position] == b'.') {
+    if !(chars[*position - 1].is_ascii_digit() || chars[*position - 1] == b'.') {
         return Err(make_error(
             input,
             chars,
