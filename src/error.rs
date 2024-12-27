@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 /// Collection of errors in the library
-#[derive(Debug, Error, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum Error {
     /// This error appears when the syntax of the template to be rendered is wrong.
     #[error(transparent)]

@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 /// An enumeration representing different errors that can occur while parsing arguments.
-#[derive(Debug, Error, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum FromArgsError {
     #[error("Invalid Type: {0}")]
     BadType(String),
