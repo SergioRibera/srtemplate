@@ -13,6 +13,9 @@ readme = "README.md"
 include = ["**/**/*.rs", "Cargo.toml", "rust-toolchain.toml", "rustfmt.toml"]
 exclude = ["examples/real_world/"]
 
+[workspace]
+members = ["helper_macros"]
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
@@ -38,6 +41,7 @@ text = []
 os = []
 math = ["dep:paste"]
 typed_args = []
+macros = ["helper_macros"]
 
 [dev-dependencies]
 divan = "0.1.14"
@@ -47,6 +51,7 @@ dashmap = "5.5.3"
 thiserror = "1.0.49"
 paste = { version = "1.0.14", optional = true }
 log = { version = "0.4.20", optional = true }
+helper_macros = { path = "helper_macros", optional = true }
 
 [[bench]]
 name = "parser"
@@ -56,3 +61,8 @@ harness = false
 name = "parse_args"
 required-features = ["typed_args"]
 path = "./examples/parse_args.rs"
+
+[[example]]
+name = "macros"
+required-features = ["macros"]
+path = "./examples/macros.rs"

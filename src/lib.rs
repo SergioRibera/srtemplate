@@ -57,6 +57,9 @@ pub use error::Error;
 /// Re-exports the [`template::function`], [`template::SrTemplate`], [`template::TemplateFunction`] type for convenient use.
 pub use template::{function, Function, SrTemplate};
 
+#[cfg(feature = "macros")]
+pub use helper_macros::function;
+
 /// The `prelude` module re-exports common items for easier use of `SrTemplate`.
 pub mod prelude {
     pub use super::builtin::*;
