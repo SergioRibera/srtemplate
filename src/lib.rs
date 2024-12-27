@@ -52,18 +52,18 @@ mod render;
 mod template;
 
 /// Re-exports the `SrTemplateError` type for convenient use.
-pub use error::SrTemplateError;
+pub use error::Error;
 
 /// Re-exports the [`template::function`], [`template::SrTemplate`], [`template::TemplateFunction`] type for convenient use.
-pub use template::{function, SrTemplate, TemplateFunction};
+pub use template::{function, Function, SrTemplate};
 
 /// The `prelude` module re-exports common items for easier use of `SrTemplate`.
 pub mod prelude {
     pub use super::builtin::*;
-    pub use super::error::SrTemplateError;
-    pub use super::template::function::*;
+    pub use super::error::Error;
+    pub use super::template::function::{Error as FunctionError, FuncResult};
     pub use super::template::validations;
-    pub use super::{SrTemplate, TemplateFunction};
+    pub use super::{Function, SrTemplate};
 
     /// When the `typed_args` feature is enabled, this module re-exports serialization related items.
     #[cfg(feature = "typed_args")]

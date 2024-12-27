@@ -1,4 +1,5 @@
-use crate::prelude::{FuncResult, FunctionError};
+use crate::function::Error;
+use crate::prelude::FuncResult;
 use crate::template::validations;
 
 /// Retrieve and concatenate environment variable values by their names.
@@ -26,7 +27,7 @@ pub fn env(args: &[String]) -> FuncResult {
 
     Ok(args
         .iter()
-        .map(|a| std::env::var(a).map_err(|_| FunctionError::InvalidArgument(a.clone())))
-        .collect::<Result<Vec<String>, FunctionError>>()?
+        .map(|a| std::env::var(a).map_err(|_| Error::InvalidArgument(a.clone())))
+        .collect::<Result<Vec<String>, Error>>()?
         .join(" "))
 }

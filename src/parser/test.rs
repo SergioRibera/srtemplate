@@ -6,12 +6,12 @@ fn not_template() {
     let res = parser(s, "{{", "}}");
 
     assert!(res.is_ok());
-    assert_eq!(res, Ok(("Hello World!", vec![])));
+    assert_eq!(res, Ok(vec![TemplateNode::RawText("Hello World!")]));
 }
 
 #[test]
 fn valid_syntax() {
-    let s = "Hello {{ variable1 }}";
+    let s = "Hello {{ variable1 }} test {{ _var_ia_ble  }}";
     let res = parser(s, "{{", "}}");
 
     assert!(res.is_ok());
@@ -62,28 +62,12 @@ fn function_outside() {
     let s = "Hello trim(var) {{ toLowerCase(variable1) }}";
     let res = parser(s, "{{", "}}");
 
-    assert!(res.is_ok());
-}
-
-#[test]
-fn test_variable_parser() {
-    let input = "{{ variable }}";
-    let result = variable_parser("{{", "}}")(input);
-
     assert_eq!(
-        result,
-        Ok(("", TemplateNode::Variable("variable".to_string())))
-    );
-}
-
-#[test]
-fn test_variable_parser_custom_delimiters() {
-    let input = "|| variable ||";
-    let result = variable_parser("||", "||")(input);
-
-    assert_eq!(
-        result,
-        Ok(("", TemplateNode::Variable("variable".to_string())))
+        res,
+        Ok(vec![
+            TemplateNode::RawText("Hello trim(var) "),
+            TemplateNode::Function("toLowerCase", vec![TemplateNode::Variable("variable1")])
+        ])
     );
 }
 
@@ -93,16 +77,13 @@ fn test_function_parser() {
     let result = parser(input, "{{", "}}");
     assert_eq!(
         result,
-        Ok((
-            "",
+        Ok(vec![TemplateNode::Function(
+            "toLowerCase",
             vec![TemplateNode::Function(
-                "toLowerCase".to_string(),
-                vec![TemplateNode::Function(
-                    "trim".to_string(),
-                    vec![TemplateNode::Variable("variable".to_string())]
-                )]
+                "trim",
+                vec![TemplateNode::Variable("variable")]
             )]
-        ))
+        )])
     );
 }
 
@@ -112,33 +93,28 @@ fn test_function_without_args() {
     let result = parser(input, "{{", "}}");
     assert_eq!(
         result,
-        Ok((
-            "",
-            vec![TemplateNode::Function("toLowerCase".to_string(), vec![])]
-        ))
+        Ok(vec![TemplateNode::Function("toLowerCase", vec![])])
     );
 }
 
 #[test]
 fn test_function_multiple_param() {
-    let input = "{{ toLowerCase(variable1, trim(variable), variable2) }}";
+    let input = "{{ toLowerCase(variable1, trim(variable), add_u8(10, 15), variable2) }}";
     let result = parser(input, "{{", "}}");
     assert_eq!(
         result,
-        Ok((
-            "",
-            vec![TemplateNode::Function(
-                "toLowerCase".to_string(),
-                vec![
-                    TemplateNode::Variable("variable1".to_string()),
-                    TemplateNode::Function(
-                        "trim".to_string(),
-                        vec![TemplateNode::Variable("variable".to_string()),]
-                    ),
-                    TemplateNode::Variable("variable2".to_string()),
-                ]
-            )]
-        ))
+        Ok(vec![TemplateNode::Function(
+            "toLowerCase",
+            vec![
+                TemplateNode::Variable("variable1"),
+                TemplateNode::Function("trim", vec![TemplateNode::Variable("variable"),]),
+                TemplateNode::Function(
+                    "add_u8",
+                    vec![TemplateNode::Number("10"), TemplateNode::Number("15")]
+                ),
+                TemplateNode::Variable("variable2"),
+            ]
+        )])
     );
 }
 
@@ -147,16 +123,7 @@ fn raw_text() {
     let s = r#"Hello {{ "ThIs Is a EXAMPLE" }}"#;
     let res = parser(s, "{{", "}}");
 
-    assert_eq!(
-        res,
-        Ok((
-            "",
-            vec![
-                TemplateNode::Text("Hello ".to_string()),
-                TemplateNode::InnerText("ThIs Is a EXAMPLE".to_string())
-            ]
-        ))
-    );
+    assert!(res.is_err());
 }
 
 #[test]
@@ -166,17 +133,49 @@ fn inner_function_raw_text() {
 
     assert_eq!(
         res,
-        Ok((
-            "",
-            vec![
-                TemplateNode::Text("Hello ".to_string()),
-                TemplateNode::Function(
-                    "toLowerCase".to_string(),
-                    vec![TemplateNode::InnerText("ThIs Is a EXAMPLE".to_string())]
-                ),
-            ]
-        ))
+        Ok(vec![
+            TemplateNode::RawText("Hello "),
+            TemplateNode::Function(
+                "toLowerCase",
+                vec![TemplateNode::String("ThIs Is a EXAMPLE")]
+            ),
+        ])
     );
+}
+
+#[test]
+fn numbers() {
+    let s = r#"Hello {{ test(14, 0.25, 00000, 00000.0) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert_eq!(
+        res,
+        Ok(vec![
+            TemplateNode::RawText("Hello "),
+            TemplateNode::Function(
+                "test",
+                vec![
+                    TemplateNode::Number("14"),
+                    TemplateNode::Float("0.25"),
+                    TemplateNode::Number("00000"),
+                    TemplateNode::Float("00000.0"),
+                ]
+            ),
+        ])
+    );
+}
+
+#[test]
+fn invalid_numbers() {
+    let s = r#"Hello {{ test(14.0.8) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert!(res.is_err());
+
+    let s = r#"Hello {{ test(14test) }}"#;
+    let res = parser(s, "{{", "}}");
+
+    assert!(res.is_err());
 }
 
 #[test]
@@ -186,38 +185,22 @@ fn recursive_function_syntax() {
 
     assert_eq!(
         res,
-        Ok((
-            "",
-            vec![
-                TemplateNode::Text("Hello ".to_string()),
-                TemplateNode::Function(
-                    "toLowerCase".to_string(),
+        Ok(vec![
+            TemplateNode::RawText("Hello "),
+            TemplateNode::Function(
+                "toLowerCase",
+                vec![TemplateNode::Function(
+                    "trim",
                     vec![TemplateNode::Function(
-                        "trim".to_string(),
-                        vec![TemplateNode::Function(
-                            "split".to_string(),
-                            vec![
-                                TemplateNode::Variable("variable1".to_string()),
-                                TemplateNode::InnerText("|".to_string())
-                            ]
-                        )]
+                        "split",
+                        vec![
+                            TemplateNode::Variable("variable1"),
+                            TemplateNode::String("|")
+                        ]
                     )]
-                )
-            ]
-        ))
-    );
-}
-
-#[test]
-fn test_text_parser() {
-    let input = "This is some text. {{ variable }} and {{ toLowerCase(trim(variable)) }}";
-    let result = text_parser("{{")(input);
-    assert_eq!(
-        result,
-        Ok((
-            "{{ variable }} and {{ toLowerCase(trim(variable)) }}",
-            TemplateNode::Text("This is some text. ".to_string())
-        ))
+                )]
+            )
+        ])
     );
 }
 
@@ -227,20 +210,17 @@ fn test_parser() {
     let result = parser(input, "{{", "}}");
     assert_eq!(
         result,
-        Ok((
-            "",
-            vec![
-                TemplateNode::Text("This is some text. ".to_string()),
-                TemplateNode::Variable("variable".to_string()),
-                TemplateNode::Text(" and ".to_string()),
-                TemplateNode::Function(
-                    "toLowerCase".to_string(),
-                    vec![TemplateNode::Function(
-                        "trim".to_string(),
-                        vec![TemplateNode::Variable("variable".to_string())]
-                    )]
-                )
-            ]
-        ))
+        Ok(vec![
+            TemplateNode::RawText("This is some text. "),
+            TemplateNode::Variable("variable"),
+            TemplateNode::RawText(" and "),
+            TemplateNode::Function(
+                "toLowerCase",
+                vec![TemplateNode::Function(
+                    "trim",
+                    vec![TemplateNode::Variable("variable")]
+                )]
+            )
+        ])
     );
 }

@@ -5,9 +5,9 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use crate::builtin;
-use crate::error::SrTemplateError;
+use crate::error::Error;
 use crate::parser::parser;
-use crate::render::render_nodes;
+use crate::render::nodes;
 
 #[cfg(feature = "math")]
 use crate::gen_math_use;
@@ -18,7 +18,7 @@ pub mod function;
 pub mod validations;
 
 /// This corresponds to the type for custom functions that may exist.
-pub type TemplateFunction = fn(&[String]) -> FuncResult;
+pub type Function = fn(&[String]) -> FuncResult;
 
 /// This structure is the basis of everything, it is responsible for managing variables and functions.
 ///
@@ -33,12 +33,13 @@ pub type TemplateFunction = fn(&[String]) -> FuncResult;
 ///
 /// ctx.render("Hello {{ var }}! This is {{ otherVar }} and this is number: {{number}}").unwrap();
 /// ```
+#[allow(clippy::module_name_repetitions)]
 #[derive(Clone)]
 pub struct SrTemplate<'a> {
     delimiter_start: Cow<'a, str>,
     delimiter_close: Cow<'a, str>,
     variables: Arc<DashMap<Cow<'a, str>, String>>,
-    functions: Arc<DashMap<Cow<'a, str>, Box<TemplateFunction>>>,
+    functions: Arc<DashMap<Cow<'a, str>, Box<Function>>>,
 }
 
 impl<'a> SrTemplate<'a> {
@@ -58,7 +59,7 @@ impl<'a> SrTemplate<'a> {
     ///
     /// * `name`: Function name, this name is the one you will use in the template
     /// * `func`: This is the function that will be evaluated when it is called from the template
-    pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: TemplateFunction) {
+    pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: Function) {
         self.functions.insert(name.into(), Box::new(func));
     }
 
@@ -132,21 +133,22 @@ impl<'a> SrTemplate<'a> {
         self.delimiter_close = close.into();
     }
 
-    /// Renders text as a template, replacing variables and processing functions.
+    /// Renders a template by replacing variables and processing functions.
     ///
     /// # Arguments
     ///
-    /// * `text`: The text in template format to be processed.
+    /// * `text` - A template string to be rendered.
     ///
     /// # Returns
     ///
-    /// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
+    /// A `Result` where:
+    /// - `Ok(String)` contains the rendered template as a string.
+    /// - `Err(Error)` contains the details of an error if rendering fails.
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// use srtemplate::prelude::SrTemplate;
-    /// use srtemplate::prelude::SrTemplateError;
     ///
     /// let ctx = SrTemplate::default();
     /// let template = "Hello, {{ name }}!";
@@ -155,23 +157,32 @@ impl<'a> SrTemplate<'a> {
     ///     Err(err) => eprintln!("Error: {:?}", err),
     /// }
     /// ```
-    pub fn render<T: AsRef<str>>(&self, text: T) -> Result<String, SrTemplateError> {
-        let text = text.as_ref();
-        let start = self.delimiter_start.as_ref();
-        let close = self.delimiter_close.as_ref();
-        let (r, nodes) =
-            parser(text, start, close).map_err(|e| SrTemplateError::BadSyntax(e.to_string()))?;
-        let res = render_nodes(nodes, &self.variables.clone(), &self.functions.clone())?;
-        let res = if text.starts_with(r) {
-            format!("{r}{res}")
-        } else {
-            format!("{res}{r}")
-        };
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The syntax of the template is invalid.
+    /// - A variable or function is not found or fails during processing.
+    pub fn render<T: AsRef<str>>(&self, text: T) -> Result<String, Error> {
+        let input = text.as_ref();
+        let open_delim = self.delimiter_start.as_ref();
+        let close_delim = self.delimiter_close.as_ref();
+        let mut res = String::with_capacity(input.len());
+        let tnodes = parser(input, open_delim, close_delim)?;
+
+        for var in tnodes {
+            nodes(
+                &mut res,
+                var,
+                self.variables.as_ref(),
+                self.functions.as_ref(),
+            )?;
+        }
         Ok(res)
     }
 }
 
-impl<'a> Default for SrTemplate<'a> {
+impl Default for SrTemplate<'_> {
     /// Generates an instance with all the builtin functions that are enabled from features
     fn default() -> Self {
         let tmp = Self {

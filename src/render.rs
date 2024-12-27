@@ -2,9 +2,9 @@ use std::borrow::Cow;
 
 use dashmap::DashMap;
 
-use crate::error::SrTemplateError;
+use crate::error::Error;
 use crate::parser::TemplateNode;
-use crate::template::TemplateFunction;
+use crate::template::Function;
 #[cfg(feature = "debug")]
 use log::debug;
 
@@ -21,48 +21,89 @@ use log::debug;
 /// # Returns
 ///
 /// A `Result` where `Ok` contains the rendered template as a `String`, and `Err` holds a [`SrTemplateError`] if an error occurs.
-pub fn render_nodes(
-    nodes: Vec<TemplateNode>,
+pub fn nodes(
+    res: &mut String,
+    tnode: TemplateNode,
     vars: &DashMap<Cow<'_, str>, String>,
-    funcs: &DashMap<Cow<'_, str>, Box<TemplateFunction>>,
-) -> Result<String, SrTemplateError> {
-    let mut res = String::new();
+    funcs: &DashMap<Cow<'_, str>, Box<Function>>,
+) -> Result<(), Error> {
+    match tnode {
+        TemplateNode::RawText(text)
+        | TemplateNode::String(text)
+        | TemplateNode::Float(text)
+        | TemplateNode::Number(text) => res.push_str(text),
+        TemplateNode::Variable(variable) => {
+            let variable = vars
+                .get(variable)
+                .ok_or(Error::VariableNotFound(variable.to_owned()))?;
 
-    for node in nodes {
-        match node {
-            TemplateNode::Text(text) | TemplateNode::InnerText(text) => res.push_str(&text),
-            TemplateNode::Variable(variable) => {
-                let variable = vars
-                    .get(variable.as_str())
-                    .ok_or(SrTemplateError::VariableNotFound(variable))?;
+            res.push_str(&variable);
+        }
+        TemplateNode::Function(function, arguments) => {
+            let evaluated_arguments: Result<Vec<String>, Error> = arguments
+                .into_iter()
+                .map(|arg| node(arg, vars, funcs))
+                .collect();
 
-                res.push_str(&variable);
-            }
-            TemplateNode::Function(function, arguments) => {
-                let evaluated_arguments: Result<Vec<String>, SrTemplateError> = arguments
-                    .into_iter()
-                    .map(|arg| render_nodes(vec![arg], vars, funcs))
-                    .collect();
+            let evaluated_arguments = evaluated_arguments?;
+            #[cfg(feature = "debug")]
+            debug!("Evaluated Args: {evaluated_arguments:?}");
 
-                let evaluated_arguments = evaluated_arguments?;
-                #[cfg(feature = "debug")]
-                debug!("Evaluated Args: {evaluated_arguments:?}");
+            let result_of_function = funcs
+                .get(function)
+                .ok_or(Error::FunctionNotImplemented(function.to_owned()))?(
+                &evaluated_arguments
+            )?;
 
-                let result_of_function = funcs
-                    .get(function.as_str())
-                    .ok_or(SrTemplateError::FunctionNotImplemented(function))?(
-                    &evaluated_arguments,
-                )?;
+            #[cfg(feature = "debug")]
+            debug!("Result of function: {result_of_function:?}");
 
-                #[cfg(feature = "debug")]
-                debug!("Result of function: {result_of_function:?}");
-
-                res.push_str(&result_of_function);
-            }
+            res.push_str(&result_of_function);
         }
     }
 
-    Ok(res)
+    Ok(())
+}
+
+pub fn node(
+    tnode: TemplateNode,
+    vars: &DashMap<Cow<'_, str>, String>,
+    funcs: &DashMap<Cow<'_, str>, Box<Function>>,
+) -> Result<String, Error> {
+    match tnode {
+        TemplateNode::RawText(text)
+        | TemplateNode::String(text)
+        | TemplateNode::Float(text)
+        | TemplateNode::Number(text) => Ok(text.to_owned()),
+        TemplateNode::Variable(variable) => {
+            let variable = vars
+                .get(variable)
+                .ok_or(Error::VariableNotFound(variable.to_owned()))?;
+
+            Ok(variable.to_owned())
+        }
+        TemplateNode::Function(function, arguments) => {
+            let evaluated_arguments: Result<Vec<String>, Error> = arguments
+                .into_iter()
+                .map(|arg| node(arg, vars, funcs))
+                .collect();
+
+            let evaluated_arguments = evaluated_arguments?;
+            #[cfg(feature = "debug")]
+            debug!("Evaluated Args: {evaluated_arguments:?}");
+
+            let result_of_function = funcs
+                .get(function)
+                .ok_or(Error::FunctionNotImplemented(function.to_owned()))?(
+                &evaluated_arguments
+            )?;
+
+            #[cfg(feature = "debug")]
+            debug!("Result of function: {result_of_function:?}");
+
+            Ok(result_of_function)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -78,12 +119,14 @@ mod tests {
     fn basic_render() {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "World".to_string())]);
         let template = "Hello {{ var }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
-        let res = render_nodes(nodes, &vars, &DashMap::new());
+        let tnodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
 
-        assert!(res.is_ok());
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &DashMap::new());
+            assert!(out.is_ok());
+        }
 
-        let res = res.unwrap();
         assert_eq!(&res, "Hello World");
     }
 
@@ -92,16 +135,18 @@ mod tests {
         let vars = DashMap::from_iter([(Cow::Borrowed("var"), "WoRlD".to_string())]);
         let funcs = DashMap::from_iter([(
             Cow::Borrowed("toLowerCase"),
-            Box::new(builtin::text::to_lower as TemplateFunction),
+            Box::new(builtin::text::to_lower as Function),
         )]);
         let template = "Hello {{ toLowerCase(var) }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
-        let res = render_nodes(nodes, &vars, &funcs);
+        let tnodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
 
-        assert!(res.is_ok());
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &funcs);
+            assert!(out.is_ok());
+        }
 
-        let res = res.unwrap();
-        assert_eq!(res, "Hello world".to_string());
+        assert_eq!(&res, "Hello world");
     }
 
     #[test]
@@ -110,21 +155,23 @@ mod tests {
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
-                Box::new(builtin::text::to_lower as TemplateFunction),
+                Box::new(builtin::text::to_lower as Function),
             ),
             (
                 Cow::Borrowed("trim"),
-                Box::new(builtin::text::trim as TemplateFunction),
+                Box::new(builtin::text::trim as Function),
             ),
         ]);
         let template = "Hello {{ toLowerCase(trim(var)) }}";
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
-        let res = render_nodes(nodes, &vars, &funcs);
+        let tnodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
 
-        assert!(res.is_ok());
+        for node in tnodes.into_iter() {
+            let out = nodes(&mut res, node, &vars, &funcs);
+            assert!(out.is_ok());
+        }
 
-        let res = res.unwrap();
-        assert_eq!(res, "Hello world".to_string());
+        assert_eq!(&res, "Hello world");
     }
 
     #[test]
@@ -133,22 +180,23 @@ mod tests {
         let funcs = DashMap::from_iter([
             (
                 Cow::Borrowed("toLowerCase"),
-                Box::new(builtin::text::to_lower as TemplateFunction),
+                Box::new(builtin::text::to_lower as Function),
             ),
             (
                 Cow::Borrowed("trim"),
-                Box::new(builtin::text::trim as TemplateFunction),
+                Box::new(builtin::text::trim as Function),
             ),
         ]);
         let template = r#"Hello
 {{ toLowerCase(trim(var, "  !   ")) }}"#;
-        let (_, nodes) = parser(template, "{{", "}}").unwrap();
-        let res = render_nodes(nodes, &vars, &funcs);
+        let tnodes = parser(template, "{{", "}}").unwrap();
+        let mut res = String::new();
 
-        println!("Err: {res:?}");
-        assert!(res.is_ok());
+        for tnode in tnodes.into_iter() {
+            let out = nodes(&mut res, tnode, &vars, &funcs);
+            assert!(out.is_ok());
+        }
 
-        let res = res.unwrap();
-        assert_eq!(res, "Hello\nworld !".to_string());
+        assert_eq!(&res, "Hello\nworld !");
     }
 }

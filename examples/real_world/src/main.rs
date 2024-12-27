@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use leptos::html::Input;
 use leptos::*;
-use srtemplate::SrTemplate;
+use srtemplate::{Error, SrTemplate};
 
 fn and(o: Option<HtmlElement<Input>>, f: impl Fn(String) -> bool) -> Option<HtmlElement<Input>> {
     if let Some(ref v) = o {
@@ -13,7 +13,7 @@ fn and(o: Option<HtmlElement<Input>>, f: impl Fn(String) -> bool) -> Option<Html
     None
 }
 
-fn render_time(ctx: SrTemplate, s: &str) -> (String, String) {
+fn render_time(ctx: SrTemplate, s: &str) -> (Option<Error>, Option<String>, String) {
     let start = instant::Instant::now();
     let render = ctx.render(s);
     let duration = start.elapsed();
@@ -22,8 +22,12 @@ fn render_time(ctx: SrTemplate, s: &str) -> (String, String) {
     let nanoseconds = duration.subsec_nanos();
 
     (
-        format!("{render:?}"),
-        format!("{}chars {seconds}s {milliseconds}ms {nanoseconds}ns", s.chars().count()),
+        render.clone().err(),
+        render.ok(),
+        format!(
+            "{}chars {seconds}s {milliseconds}ms {nanoseconds}ns",
+            s.chars().count()
+        ),
     )
 }
 
@@ -37,10 +41,10 @@ fn App() -> impl IntoView {
     let (template_str, set_template) = create_signal(String::from("This is a {{ trim(var) }}"));
     let (time_str, set_time) = create_signal(String::from("0s 0ms 0ns"));
 
-    let rendered = create_memo(move |_| {
-        let (render, time) = render_time(ctx.get(), &template_str.get());
+    let has = create_memo(move |_| {
+        let (err, render, time) = render_time(ctx.get(), &template_str.get());
         set_time.set(time);
-        render
+        (err, render)
     });
 
     let input_name_ref = create_node_ref::<Input>();
@@ -114,7 +118,7 @@ fn App() -> impl IntoView {
                     <div class="flex flex-col">
                         <h3 class="text-2xl text-bold">Delimiter</h3>
                     </div>
-                    <div class="flex flex-row justify-between items-end mb-2">
+                    <div class="flex flex-row justify-between items-end mb-2 w-[500px]">
                         <div class="flex flex-col">
                             <span class="pt-3 block">Start Delimiter</span>
                             <input
@@ -150,7 +154,7 @@ fn App() -> impl IntoView {
                         <button
                             class="bg-orange-300/50 hover:bg-orange-300/70 px-4 py-3"
                             on:click=move |_| set_time.update(|last| {
-                                let (_, time) = render_time(ctx.get(), &template_str.get());
+                                let (_, _, time) = render_time(ctx.get(), &template_str.get());
                                 *last = time;
                             })
                         >
@@ -159,11 +163,89 @@ fn App() -> impl IntoView {
                         <h3 class="text-2xl text-bold"> Render Result </h3>
                         <span class="text-xs mb-1">{time_str}</span>
                     </div>
-                    <textarea
-                        class="bg-orange-300/30 resize-none w-[500px] h-[365px] focus:outline-none p-4"
-                        prop:readonly={true}
-                        prop:defaultValue={rendered}
-                    />
+                    {move || match has.get().0 {
+                        Some(Error::BadSyntax(err)) => {
+                            view! {
+                                <div class="bg-red-100 border border-red-400 text-red-800 rounded-lg p-4 space-y-3">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold text-red-700">Syntax Error:</span>
+                                        <code class="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded text-sm">{err.description}</code>
+                                    </div>
+                                    <div class="bg-red-200 rounded p-3 text-sm font-mono space-y-1">
+                                        <div class="flex">
+                                            <code class="text-red-600">{err.line + 1}</code>
+                                            <code class="mx-2 text-gray-600">|</code>
+                                            <code>{err.context}</code>
+                                        </div>
+                                        <div class="flex">
+                                            <code class="text-red-600">{".".repeat((err.line + 1).to_string().len())}</code>
+                                            <code class="mx-2 text-gray-600">|</code>
+                                            <code class="text-red-500">{"-".repeat(err.column)}</code><span class="text-red-700 font-bold">^</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-700">
+                                        {"at line "}
+                                        <span class="font-semibold text-gray-800">{err.line + 1}</span>
+                                        {", column "}
+                                        <span class="font-semibold text-gray-800">{err.column}</span>
+                                    </div>
+                                </div>
+                            }.into_view()
+                        }
+                        Some(Error::VariableNotFound(var)) => {
+                            view! {
+                                <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold text-yellow-700">Variable Error:</span>
+                                        <code class="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-sm">
+                                            {"Variable not found: "}{var}
+                                        </code>
+                                    </div>
+                                </div>
+                            }.into_view()
+                        }
+                        Some(Error::FunctionNotImplemented(func)) => {
+                            view! {
+                                <div class="bg-blue-100 border border-blue-400 text-blue-800 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold text-blue-700">Function Error:</span>
+                                        <code class="ml-2 px-2 py-1 bg-blue-200 text-blue-800 rounded text-sm">
+                                            {"Function not implemented: "}{func}
+                                        </code>
+                                    </div>
+                                </div>
+                            }.into_view()
+                        }
+                        Some(Error::Function(err)) => {
+                            view! {
+                                <div class="bg-purple-100 border border-purple-400 text-purple-800 rounded-lg p-4">
+                                    <div class="flex items-center">
+                                        <span class="font-semibold text-purple-700">Internal Function Error:</span>
+                                        <code class="ml-2 px-2 py-1 bg-purple-200 text-purple-800 rounded text-sm">{err.to_string()}</code>
+                                    </div>
+                                </div>
+                            }.into_view()
+                        }
+                        None => {
+                            if let Some(render) = has.get().1 {
+                                view! {
+                                    <textarea
+                                        class="bg-orange-300/30 resize-none w-[500px] h-[354px] focus:outline-none p-4"
+                                        prop:readonly={true}
+                                        prop:defaultValue={render}
+                                    />
+                                }.into_view()
+                            } else {
+                                view! {
+                                    <textarea
+                                        class="bg-orange-300/30 resize-none w-[500px] h-[354px] focus:outline-none p-4"
+                                        prop:readonly={true}
+                                        prop:defaultValue="Nothing to render"
+                                    />
+                                }.into_view()
+                            }
+                        }
+                    }}
                 </div>
             </section>
         </div>

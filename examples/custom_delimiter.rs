@@ -9,9 +9,14 @@ fn main() {
     println!("Rendered: {}", ctx.render(template).unwrap());
 
     // Change delimiter
-    // need mut instance
     ctx.set_delimiter("||", "||");
     let template = "Hola || toLower(var) ||";
+
+    println!("Rendered: {}", ctx.render(template).unwrap());
+
+    // like shell syntax
+    ctx.set_delimiter("${", "}");
+    let template = "Hola ${ toLower(var)}";
 
     println!("Rendered: {}", ctx.render(template).unwrap());
 }
