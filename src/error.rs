@@ -5,7 +5,7 @@ use thiserror::Error;
 pub enum Error {
     /// This error appears when the syntax of the template to be rendered is wrong.
     #[error(transparent)]
-    BadSyntax(crate::parser::Error),
+    BadSyntax(crate::parser::SyntaxError),
 
     /// This error appears when the variable to be rendered does not exist.
     #[error("Variable not found: {0}")]
