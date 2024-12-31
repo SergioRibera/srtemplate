@@ -8,7 +8,7 @@ mod literals;
 #[cfg(test)]
 mod test;
 
-pub use error::{make, Error};
+pub use error::{SyntaxError, SyntaxErrorKind};
 
 use functions::parse_function_arguments;
 
@@ -46,46 +46,21 @@ pub fn parser<'a>(
     let mut res = Vec::with_capacity(20);
     let chars = input.as_bytes();
     let mut position = 0usize;
-    let mut column = 0usize;
-    let mut line = 0usize;
-    let mut start_line = 0usize;
 
     while !is_eof(chars, position) {
-        if advance_delimiter(chars, start, &mut column, &mut position) {
-            let var = parse_template_expression(
-                input,
-                chars,
-                &mut position,
-                &mut line,
-                &mut column,
-                &mut start_line,
-            )?;
+        if advance_delimiter(chars, start,  &mut position) {
+            let var = parse_template_expression(input, chars, &mut position)?;
 
             // check end of sentence
-            if !advance_delimiter(chars, close, &mut column, &mut position) {
-                return Err(make(
-                    chars,
-                    line,
-                    column,
-                    start_line,
-                    &format!("Expected {close:?}, but found end of input"),
-                    position,
-                ));
+            if !advance_delimiter(chars, close,  &mut position) {
+                return Err(SyntaxError::found_eof(input, position, close));
             }
 
             res.push(var);
             continue;
         }
 
-        res.push(raw_text(
-            input,
-            chars,
-            start,
-            &mut position,
-            &mut line,
-            &mut column,
-            &mut start_line,
-        ));
+        res.push(raw_text(input, chars, start, &mut position));
     }
 
     Ok(res)
@@ -95,33 +70,23 @@ fn parse_template_expression<'a>(
     input: &'a str,
     chars: &[u8],
     position: &mut usize,
-    line: &mut usize,
-    column: &mut usize,
-    start_line: &mut usize,
 ) -> Result<TemplateNode<'a>, crate::Error> {
-    skip_whitespace(chars, position, line, column, start_line);
+    skip_whitespace(chars, position);
     // expect ident
-    let (start, name_end) = identifier(chars, position, line, column, start_line);
-    skip_whitespace(chars, position, line, column, start_line);
+    let (start, name_end) = identifier(chars, position);
+    skip_whitespace(chars, position);
 
     if !is_eof(chars, *position) && chars[*position] == b'(' {
-        advance(chars, position, line, column, start_line);
-        skip_whitespace(chars, position, line, column, start_line);
+        advance(chars, position);
+        skip_whitespace(chars, position);
 
-        let args = parse_function_arguments(input, chars, position, line, column, start_line)?;
-        skip_whitespace(chars, position, line, column, start_line);
+        let args = parse_function_arguments(input, chars, position)?;
+        skip_whitespace(chars, position);
 
-        if !advance_delimiter(chars, ")", column, position) {
-            return Err(make(
-                chars,
-                *line,
-                *column,
-                *start_line,
-                "Unterminated function arguments",
-                start,
-            ));
+        if !advance_delimiter(chars, ")", position) {
+            return Err(SyntaxErrorKind::UnterminatedArgument.into_error(input, *position));
         }
-        skip_whitespace(chars, position, line, column, start_line);
+        skip_whitespace(chars, position);
 
         Ok(TemplateNode::Function(&input[start..name_end], args))
     } else {
@@ -129,18 +94,12 @@ fn parse_template_expression<'a>(
     }
 }
 
-fn identifier(
-    chars: &[u8],
-    position: &mut usize,
-    line: &mut usize,
-    column: &mut usize,
-    start_line: &mut usize,
-) -> (usize, usize) {
+fn identifier(chars: &[u8], position: &mut usize) -> (usize, usize) {
     let start = *position;
     while !is_eof(chars, *position)
         && (chars[*position].is_ascii_alphanumeric() || chars[*position] == b'_')
     {
-        advance(chars, position, line, column, start_line);
+        advance(chars, position);
     }
 
     (start, *position)
@@ -151,36 +110,20 @@ fn raw_text<'a>(
     chars: &[u8],
     open_delim: &str,
     position: &mut usize,
-    line: &mut usize,
-    column: &mut usize,
-    start_line: &mut usize,
 ) -> TemplateNode<'a> {
     let start = *position;
     while !is_eof(chars, *position) {
         if check_delimiter(chars, open_delim, *position) {
             break;
         }
-        advance(chars, position, line, column, start_line);
+        advance(chars, position);
     }
 
     TemplateNode::RawText(&input[start..*position])
 }
 
-fn advance(
-    chars: &[u8],
-    position: &mut usize,
-    line: &mut usize,
-    column: &mut usize,
-    start_line: &mut usize,
-) {
-    if *position < chars.len() {
-        if chars[*position] == b'\n' {
-            *line += 1;
-            *column = 0;
-            *start_line = *position;
-        } else {
-            *column += 1;
-        }
+fn advance(chars: &[u8], position: &mut usize) {
+    if !is_eof(chars, *position) {
         *position += 1;
     }
 }
@@ -190,11 +133,10 @@ fn check_delimiter(chars: &[u8], delim: &str, position: usize) -> bool {
         && &chars[position..position + delim.len()] == delim.as_bytes()
 }
 
-fn advance_delimiter(chars: &[u8], delim: &str, column: &mut usize, position: &mut usize) -> bool {
+fn advance_delimiter(chars: &[u8], delim: &str, position: &mut usize) -> bool {
     if check_delimiter(chars, delim, *position) {
         if *position + delim.len() <= chars.len() {
             *position += delim.len();
-            *column += delim.len();
         }
         return true;
     }
@@ -206,14 +148,8 @@ fn is_eof(chars: &[u8], position: usize) -> bool {
     position >= chars.len()
 }
 
-fn skip_whitespace(
-    chars: &[u8],
-    position: &mut usize,
-    line: &mut usize,
-    column: &mut usize,
-    start_line: &mut usize,
-) {
+fn skip_whitespace(chars: &[u8], position: &mut usize) {
     while !is_eof(chars, *position) && chars[*position].is_ascii_whitespace() {
-        advance(chars, position, line, column, start_line);
+        advance(chars, position);
     }
 }
