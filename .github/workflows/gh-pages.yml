@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - uses: dsherret/rust-toolchain-file@v1
       - name: Install Trunk
@@ -32,7 +32,7 @@ jobs:
         working-directory: ./examples/real_world
         run: trunk build --release --public-url /srtemplate/
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./examples/real_world/dist
 
@@ -45,4 +45,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: prod
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
