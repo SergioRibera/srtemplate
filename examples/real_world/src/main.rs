@@ -169,7 +169,7 @@ fn App() -> impl IntoView {
                                 <div class="bg-red-100 border border-red-400 text-red-800 rounded-lg p-4 space-y-3">
                                     <div class="flex items-center">
                                         <span class="font-semibold text-red-700">Syntax Error:</span>
-                                        <code class="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded text-sm">{err.description}</code>
+                                        <code class="ml-2 px-2 py-1 bg-red-200 text-red-800 rounded text-sm">{err.context.clone()}</code>
                                     </div>
                                     <div class="bg-red-200 rounded p-3 text-sm font-mono space-y-1">
                                         <div class="flex">
