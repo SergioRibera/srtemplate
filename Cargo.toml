@@ -2,7 +2,7 @@
 name = "srtemplate"
 version = "0.3.1"
 edition = "2021"
-description = "Template String made with nom parser"
+description = "Template String blazing fast with dependencyless"
 categories = ["template-engine", "text-processing"]
 keywords = ["runtime", "string", "template"]
 authors = ["Sergio Ribera"]
@@ -51,7 +51,7 @@ dashmap = "5.5.3"
 thiserror = "1.0.49"
 paste = { version = "1.0.14", optional = true }
 log = { version = "0.4.20", optional = true }
-helper_macros = { package = "srtemplate_helper_macros", path = "helper_macros", optional = true }
+helper_macros = { package = "srtemplate_helper_macros", version = "0.1", path = "helper_macros", optional = true }
 
 [[bench]]
 name = "parser"

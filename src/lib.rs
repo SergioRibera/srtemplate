@@ -6,6 +6,7 @@
 //! - `math`: Mathematical functions.
 //! - `typed_args`: Enables typed arguments, if specified.
 //! - `debug`: Enable log for library
+//! - `macros`: Enable a easy way to create custom functions
 //! - `default`: Enable all features excepts `debug` feature
 //!
 //! To enable specific features, you can include them in your dependencies, like:

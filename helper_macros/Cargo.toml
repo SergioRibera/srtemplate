@@ -2,6 +2,11 @@
 name = "srtemplate_helper_macros"
 version = "0.1.0"
 edition = "2021"
+description = "Macros for SrTemplate"
+categories = ["template-engine", "text-processing"]
+keywords = ["runtime", "string", "template"]
+authors = ["Sergio Ribera"]
+license = "MIT OR Apache-2.0"
 
 [lib]
 proc-macro = true
