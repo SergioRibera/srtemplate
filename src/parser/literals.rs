@@ -103,11 +103,7 @@ mod tests {
     #[test]
     fn test_string_literal_unterminated() {
         let (input, chars, mut position) = setup("\"hello world");
-        let result = string_literal(
-            input,
-            &chars,
-            &mut position,
-        );
+        let result = string_literal(input, &chars, &mut position);
 
         assert!(result.is_err());
 
@@ -120,11 +116,7 @@ mod tests {
     #[test]
     fn test_number_literal_integer() {
         let (input, chars, mut position) = setup("12345");
-        let result = number_literal(
-            input,
-            &chars,
-            &mut position,
-        );
+        let result = number_literal(input, &chars, &mut position);
 
         assert!(result.is_ok());
         let node = result.unwrap();

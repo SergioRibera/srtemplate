@@ -48,11 +48,11 @@ pub fn parser<'a>(
     let mut position = 0usize;
 
     while !is_eof(chars, position) {
-        if advance_delimiter(chars, start,  &mut position) {
+        if advance_delimiter(chars, start, &mut position) {
             let var = parse_template_expression(input, chars, &mut position)?;
 
             // check end of sentence
-            if !advance_delimiter(chars, close,  &mut position) {
+            if !advance_delimiter(chars, close, &mut position) {
                 return Err(SyntaxError::found_eof(input, position, close));
             }
 
