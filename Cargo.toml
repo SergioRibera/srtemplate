@@ -15,6 +15,7 @@ exclude = ["examples/real_world/"]
 
 [workspace]
 members = ["helper_macros"]
+exclude = ["examples/real_world"]
 
 [package.metadata.docs.rs]
 all-features = true
