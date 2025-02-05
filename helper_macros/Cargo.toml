@@ -1,5 +1,5 @@
 [package]
-name = "helper_macros"
+name = "srtemplate_helper_macros"
 version = "0.1.0"
 edition = "2021"
 

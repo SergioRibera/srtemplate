@@ -119,15 +119,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dfda62a12f55daeae5015f81b0baea145391cb4520f86c248fc615d72640d12"
 
 [[package]]
-name = "helper_macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "venial",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.148"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -244,10 +235,19 @@ version = "0.3.1"
 dependencies = [
  "dashmap",
  "divan",
- "helper_macros",
  "log",
  "paste",
+ "srtemplate_helper_macros",
  "thiserror",
+]
+
+[[package]]
+name = "srtemplate_helper_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "venial",
 ]
 
 [[package]]
