@@ -14,8 +14,9 @@ fn main() {
 
     println!("Rendered: {}", ctx.render(template).unwrap());
 
-    // like shell syntax
-    ctx.set_delimiter("${", "}");
+    // Creating new instance of template like shell syntax
+    let ctx = SrTemplate::with_delimiter("${", "}");
+    ctx.add_variable("var", &"mUnDo");
     let template = "Hola ${ toLower(var)}";
 
     println!("Rendered: {}", ctx.render(template).unwrap());

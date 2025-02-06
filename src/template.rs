@@ -43,6 +43,20 @@ pub struct SrTemplate<'a> {
 }
 
 impl<'a> SrTemplate<'a> {
+    /// Create instance of SrTemplate with custom delimiters
+    ///
+    /// # Arguments
+    ///
+    /// * `start`: The start delimiter. This is a string slice or a type that can be converted into a `Cow<str>`.
+    /// * `close`: The end delimiter. This is a string slice or a type that can be converted into a `Cow<str>`.
+    pub fn with_delimiter<U: Into<Cow<'a, str>>>(start: U, close: U) -> Self {
+        Self {
+            delimiter_start: start.into(),
+            delimiter_close: close.into(),
+            ..Default::default()
+        }
+    }
+
     /// Adds variables that can later be rendered in the template
     ///
     /// # Arguments
