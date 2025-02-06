@@ -57,6 +57,20 @@ impl<'a> SrTemplate<'a> {
         }
     }
 
+    /// Adds variable that can later be rendered in the template
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: Variable name, this name is the one you will use in the template
+    /// * `value`: This is the value on which the template will be replaced in the template
+    pub fn add_variable<U: Into<Cow<'a, str>>, T: ToString>(&self, name: U, value: T) {
+        let value = value.to_string();
+        self.variables
+            .entry(name.into())
+            .and_modify(|old| *old = value.clone())
+            .or_insert_with(|| value.clone());
+    }
+
     /// Adds variables that can later be rendered in the template
     ///
     /// # Arguments
