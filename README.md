@@ -53,6 +53,6 @@ fn main() {
 >  For more information about the functions implemented by default or how to use the library in depth, see the [wiki](https://github.com/SergioRibera/srtemplate/wiki)
 
 ## TODO's
-- [ ] I would like to change the way custom functions are implemented.
-- [ ] Macros to create custom functions
-- [ ] Better add_variable function to make more easy and performance managing Cow
+- [x] I would like to change the way custom functions are implemented.
+- [x] Macros to create custom functions
+- [x] Better add_variable function to make more easy and performance managing Cow
