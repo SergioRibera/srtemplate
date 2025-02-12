@@ -59,7 +59,7 @@ pub use error::Error;
 pub use template::{function, Function, SrTemplate};
 
 #[cfg(feature = "macros")]
-pub use helper_macros::function;
+pub use helper_macros::{function, Variable};
 
 /// The `prelude` module re-exports common items for easier use of `SrTemplate`.
 pub mod prelude {
@@ -72,4 +72,14 @@ pub mod prelude {
     /// When the `typed_args` feature is enabled, this module re-exports serialization related items.
     #[cfg(feature = "typed_args")]
     pub use super::helper::serialize::*;
+}
+
+pub trait Variable<'a> {
+    fn variables(&self) -> impl Iterator<Item = (std::borrow::Cow<'a, str>, String)>;
+}
+
+impl<'a, T: Variable<'a>> Variable<'a> for &T {
+    fn variables(&self) -> impl Iterator<Item = (std::borrow::Cow<'a, str>, String)> {
+        T::variables(self)
+    }
 }

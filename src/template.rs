@@ -4,10 +4,10 @@ use paste::paste;
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::builtin;
 use crate::error::Error;
 use crate::parser::parser;
 use crate::render::nodes;
+use crate::{builtin, Variable};
 
 #[cfg(feature = "math")]
 use crate::gen_math_use;
@@ -55,6 +55,12 @@ impl<'a> SrTemplate<'a> {
             delimiter_close: close.into(),
             ..Default::default()
         }
+    }
+
+    pub fn add<V: Variable<'a>>(&self, value: V) {
+        value.variables().for_each(|(name, value)| {
+            self.add_variable(name.clone(), value.clone());
+        });
     }
 
     /// Adds variable that can later be rendered in the template
