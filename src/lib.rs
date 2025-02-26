@@ -59,7 +59,7 @@ pub use error::Error;
 pub use template::{function, Function, SrTemplate};
 
 #[cfg(feature = "macros")]
-pub use helper_macros::function;
+pub use helper_macros::{function, Template};
 
 /// The `prelude` module re-exports common items for easier use of `SrTemplate`.
 pub mod prelude {
