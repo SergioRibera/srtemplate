@@ -73,3 +73,13 @@ pub mod prelude {
     #[cfg(feature = "typed_args")]
     pub use super::helper::serialize::*;
 }
+
+pub trait Variable<'a> {
+    fn variables(&self) -> impl Iterator<Item = (std::borrow::Cow<'a, str>, String)>;
+}
+
+impl<'a, T: Variable<'a>> Variable<'a> for &T {
+    fn variables(&self) -> impl Iterator<Item = (std::borrow::Cow<'a, str>, String)> {
+        T::variables(self)
+    }
+}

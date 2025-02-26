@@ -97,7 +97,9 @@ fn parse_template_expression<'a>(
 fn identifier(chars: &[u8], position: &mut usize) -> (usize, usize) {
     let start = *position;
     while !is_eof(chars, *position)
-        && (chars[*position].is_ascii_alphanumeric() || chars[*position] == b'_')
+        && (chars[*position].is_ascii_alphanumeric()
+            || chars[*position] == b'_'
+            || chars[*position] == b'.')
     {
         advance(chars, position);
     }

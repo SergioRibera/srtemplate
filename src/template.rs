@@ -4,10 +4,10 @@ use paste::paste;
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use crate::builtin;
 use crate::error::Error;
 use crate::parser::parser;
 use crate::render::nodes;
+use crate::{builtin, Variable};
 
 #[cfg(feature = "math")]
 use crate::gen_math_use;
@@ -57,14 +57,52 @@ impl<'a> SrTemplate<'a> {
         }
     }
 
+    pub fn add<V: Variable<'a>>(&self, value: V) {
+        value.variables().for_each(|(name, value)| {
+            self.add_variable(name.clone(), value.clone());
+        });
+    }
+
+    /// Adds variable that can later be rendered in the template
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: Variable name, this name is the one you will use in the template
+    /// * `value`: This is the value on which the template will be replaced in the template
+    pub fn add_variable<U: Into<Cow<'a, str>>, T: ToString>(&self, name: U, value: T) {
+        let value = value.to_string();
+        self.variables
+            .entry(name.into())
+            .and_modify(|old| *old = value.clone())
+            .or_insert_with(|| value.clone());
+    }
+
     /// Adds variables that can later be rendered in the template
     ///
     /// # Arguments
     ///
     /// * `name`: Variable name, this name is the one you will use in the template
     /// * `value`: This is the value on which the template will be replaced in the template
-    pub fn add_variable<U: Into<Cow<'a, str>>, T: ToString>(&self, name: U, value: &T) {
-        self.variables.insert(name.into(), value.to_string());
+    pub fn add_variables<U: Into<Cow<'a, str>>, V: Iterator<Item = (U, &'a dyn ToString)>>(
+        &self,
+        values: V,
+    ) {
+        values.for_each(|(name, value)| {
+            self.add_variable(name, value.to_string());
+        });
+    }
+
+    /// Adds function that can later be rendered in the template
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: Function name, this name is the one you will use in the template
+    /// * `func`: This is the function that will be evaluated when it is called from the template
+    pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: Function) {
+        self.functions
+            .entry(name.into())
+            .and_modify(|old| *old = Box::new(func.clone()))
+            .or_insert_with(|| Box::new(func));
     }
 
     /// Adds functions that can later be rendered in the template
@@ -73,8 +111,13 @@ impl<'a> SrTemplate<'a> {
     ///
     /// * `name`: Function name, this name is the one you will use in the template
     /// * `func`: This is the function that will be evaluated when it is called from the template
-    pub fn add_function<T: Into<Cow<'a, str>>>(&self, name: T, func: Function) {
-        self.functions.insert(name.into(), Box::new(func));
+    pub fn add_functions<U: Into<Cow<'a, str>>, V: Iterator<Item = (U, Function)>>(
+        &self,
+        values: V,
+    ) {
+        values.for_each(|(name, func)| {
+            self.add_function(name, func);
+        });
     }
 
     /// Checks if a variable exists in the template string by its name.
