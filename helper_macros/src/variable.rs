@@ -148,8 +148,50 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, Error> {
             }
             normalized_fields
         }
-        Fields::Unit => return Err(Error::new("Unit structs are not supported")),
-        Fields::Tuple(_) => return Err(Error::new("Tuple structs are not supported")),
+        Fields::Unit => {
+            let name_ident = if name_struct.is_empty() {
+                let name_ident = name_ident.to_string();
+                struct_case
+                    .map(|s| s.convert(&name_ident))
+                    .unwrap_or(name_ident)
+            } else {
+                struct_case
+                    .map(|s| s.convert(&name_struct))
+                    .unwrap_or(name_struct)
+            };
+
+            vec![quote! {
+                (
+                    #name_ident.into(),
+                    self.to_string()
+                )
+            }]
+        }
+        Fields::Tuple(tuple) => tuple
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(i, _)| {
+                let i = proc_macro2::Literal::usize_unsuffixed(i);
+                let name_ident = if name_struct.is_empty() {
+                    let name_ident = name_ident.to_string();
+                    struct_case
+                        .map(|s| s.convert(&name_ident))
+                        .unwrap_or(name_ident)
+                } else {
+                    struct_case
+                        .map(|s| s.convert(&name_struct))
+                        .unwrap_or(name_struct.clone())
+                };
+                let name = format!("{name_ident}.{i}");
+                quote! {
+                    (
+                        #name.into(),
+                        self.#i.to_string()
+                    )
+                }
+            })
+            .collect(),
     };
 
     Ok(quote! {
