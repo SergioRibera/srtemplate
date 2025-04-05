@@ -1,6 +1,6 @@
 [package]
 name = "srtemplate_helper_macros"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Macros for SrTemplate"
 categories = ["template-engine", "text-processing"]
