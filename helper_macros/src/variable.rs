@@ -66,18 +66,22 @@ fn parse_template_attribute(attr: &Attribute) -> Result<Vec<(String, String)>, E
 }
 
 fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, Error> {
-    let name_ident = &struct_decl.name;
-    let mut struct_case = TextCase::Pascal;
+    let name_ident = struct_decl.name.clone();
+    let mut name_struct = name_ident.to_string();
+    let mut struct_case = None;
     let mut field_case = Some(TextCase::Snake);
 
     for attr in struct_decl.attributes.iter() {
         let attrs = parse_template_attribute(attr)?;
         for (key, value) in attrs {
             match key.as_str() {
-                "rename" => {
-                    struct_case = TextCase::from_str(&value).map_err(|e| Error::new(e))?;
+                "rename" | "alias" => {
+                    name_struct = value;
                 }
-                "rename_fields" => {
+                "case" => {
+                    struct_case = Some(TextCase::from_str(&value).map_err(|e| Error::new(e))?);
+                }
+                "case_fields" => {
                     field_case = Some(TextCase::from_str(&value).map_err(|e| Error::new(e))?);
                 }
                 _ => {}
@@ -104,9 +108,12 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, Error> {
                             "ignore" => {
                                 ignore = true;
                             }
-                            "rename" => {
+                            "case" => {
                                 let case = TextCase::from_str(&value).map_err(|e| Error::new(e))?;
                                 field_name = case.convert(&field_name);
+                            }
+                            "rename" | "alias" => {
+                                field_name = value;
                             }
                             _ => {}
                         }
@@ -118,8 +125,16 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, Error> {
                         field_name = case.convert(&field_name);
                     }
 
-                    let name_ident = name_ident.to_string();
-                    let name_ident = struct_case.convert(&name_ident);
+                    let name_ident = if name_struct.is_empty() {
+                        let name_ident = name_ident.to_string();
+                        struct_case
+                            .map(|s| s.convert(&name_ident))
+                            .unwrap_or(name_ident)
+                    } else {
+                        struct_case
+                            .map(|s| s.convert(&name_struct))
+                            .unwrap_or(name_struct.clone())
+                    };
                     let name = format!("{name_ident}.{field_name}");
                     let field = &field.name;
 
